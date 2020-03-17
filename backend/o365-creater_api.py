@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import tornado.web
 import tornado.ioloop
 import tornado.httpclient
@@ -335,8 +336,8 @@ class updateUser(RequestHandlerWithCROS):
             g.checkLoginErr(self,guest_session_id)################# Guest Login
             userPrincipalName = g.loginUser[guest_session_id]["userPrincipalName"]
             infomation = json.loads(self.get_argument('infomation', True))
-            g.setProperty(self,guest_session_id,"infomation",infomation)
             ret = await o.updateUser(userPrincipalName,infomation)
+            g.setProperty(self,guest_session_id,"infomation",infomation)
             self.write("OK")
         except HTTPClientError as e:
             self.clear()
@@ -389,5 +390,5 @@ if __name__ == '__main__':
            "certfile": os.path.join(os.path.abspath("."), "ssl","server.crt"),
            "keyfile": os.path.join(os.path.abspath("."), "ssl","server.key"),
     })
-    server.listen(10000)
+    server.listen(12536)
     tornado.ioloop.IOLoop.current().start()
