@@ -26,13 +26,13 @@ python3 o365-creater_api.py
 
 #### Edit invite code:
 
-In the ```invite_code``` folder, each file is an invite code, the filename is it's code and the content usage count.
+In the ```invite_code``` folder, each filename is a code and the content is the usage count.
 
-Make sure these files only contain numbers. No any newline , any characters other than [0-9]
+Make sure these files only contain numbers. No any newline , or any characters other than [0-9]
 
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/15.PNG)
 
-Or you can write your own invite code logic. Just edit the ```backend/o365_creater_auth.py``` file:
+Or you can write your own invite code check logic. Just edit line 86 to line 103 at the ```backend/o365_creater_auth.py``` file:
 
 If you change this:
 ```python
