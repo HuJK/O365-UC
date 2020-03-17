@@ -27,12 +27,12 @@ g = o365_creater_auth.pwd_guest("./config/config_guest.json") #guest login
 class RequestHandlerWithCROS(tornado.web.RequestHandler):
     def __init__(self, *args, **kwargs):
         super(RequestHandlerWithCROS, self).__init__(*args, **kwargs)
-    def set_default_headers(self):
-        self.set_header("Access-Control-Allow-Origin", "*")
-        self.set_header("Access-Control-Allow-Methods", "*")
-        self.set_header("Access-Control-Allow-Headers", "*")
-    async def options(self, *args, **kwargs): 
-        self.write("OK")
+#     def set_default_headers(self):
+#         self.set_header("Access-Control-Allow-Origin", "*")
+#         self.set_header("Access-Control-Allow-Methods", "*")
+#         self.set_header("Access-Control-Allow-Headers", "*")
+#     async def options(self, *args, **kwargs): 
+#         self.write("OK")
 
 class loginHandler(RequestHandlerWithCROS):
     def __init__(self, *args, **kwargs):
@@ -351,8 +351,8 @@ class assignLicense(RequestHandlerWithCROS):
             guest_session_id = self.get_argument('guest_session_id', True)
             g.checkLoginErr(self,guest_session_id)################# Guest Login
             userPrincipalName = g.loginUser[guest_session_id]["userPrincipalName"]
-            addLicensesID = json.loads(self.get_argument('addLicensesID', {"skuId":""}))
-            ret = await o.assignLicense(userPrincipalName,addLicensesID["skuId"])
+            addLicensesID = self.get_argument('addLicensesID', "")
+            ret = await o.assignLicense(userPrincipalName,addLicensesID)
             g.setProperty(self,guest_session_id,"addLicensesID",addLicensesID)
             self.write(json.dumps(ret, indent=2, ensure_ascii=False))
         except HTTPClientError as e:

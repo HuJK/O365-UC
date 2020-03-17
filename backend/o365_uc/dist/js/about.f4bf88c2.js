@@ -1,0 +1,2 @@
+(window["webpackJsonp"]=window["webpackJsonp"]||[]).push([["about"],{f820:function(t,u,n){"use strict";n.r(u);var e=function(){var t=this,u=t.$createElement,n=t._self._c||u;return n("v-app",[n("p",[t._v("Author: HuJK")]),n("p",[t._v("Github Page: https://github.com/HuJK/O365-UC")])])},p=[],a=n("2877"),o=n("6544"),c=n.n(o),l=n("7496"),r={},s=Object(a["a"])(r,e,p,!1,null,null,null);u["default"]=s.exports;c()(s,{VApp:l["a"]})}}]);
+//# sourceMappingURL=about.f4bf88c2.js.map

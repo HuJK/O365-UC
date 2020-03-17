@@ -199,6 +199,16 @@
                 depressed
                 @click="dialog=true"
               >Account Info</v-btn>
+
+              <v-btn
+                v-if="0==1"
+                class="white--text"
+                color="deep-purple accent-4"
+                depressed
+                @click="testFunc"
+              >Author_HuJK</v-btn>
+
+              
               <v-spacer></v-spacer>
               <v-btn
                 :disabled="!form || !username_checked || submited"
@@ -466,7 +476,7 @@
           function(res){
             if(res.data == true){
               self.server_init_status = true;
-              self.updatePage2();
+              self.updatePage();
             }
             else{
               self.server_init_status = false;
@@ -477,9 +487,16 @@
           
         ).catch(function(error){
           console.log(error);
-          self.server_init_status = false;
-          self.server_init_status_title="Invalid Server Token";
-          self.server_init_status_text = "Please contact admin to grent permission again.";
+          if (error.response) {
+            self.server_init_status = false;
+            self.server_init_status_title="Invalid Server Token";
+            self.server_init_status_text = "Please contact admin to grent permission again.";
+          }
+          else{
+            self.server_init_status = false;
+            self.server_init_status_title="Connection Error";
+            self.server_init_status_text = "Unable to connect to server.";
+          }
         })
       },
       updatePage(){
@@ -490,7 +507,7 @@
             self.domains = res.data["availableDomains"]; 
             self.licences = res.data["availableLicences"]; 
             self.selected_domain = self.selected_domain || self.domains[0];
-            self.selected_licence = self.selected_licence || self.licences[0];
+            self.selected_licence = self.selected_licence || self.licences[0]["skuId"];
             self.updatePage2();
           }
           
@@ -741,7 +758,6 @@
           self.addLicenceBtn_color = "red",
           console.log(error);
           self.addLicenceBtn_loading=false;
-          self.dialog=true
         })
         .finally(function(){
         })
@@ -749,6 +765,8 @@
       submitForm(){
         this.submited = true;
         this.createUser();
+      },testFunc(){
+        console.log(this.selected_licence);
       }
     }
   }

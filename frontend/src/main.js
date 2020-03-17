@@ -7,7 +7,7 @@ import vuetify from './plugins/vuetify';
 import axios from 'axios'
 Vue.prototype.$ajax = axios
 window._ = require('lodash');
-//Vue.prototype.$urlBase = location.origin
+
 Vue.prototype.$urlBase = location.protocol + "//" + location.hostname + ":10000"
 Vue.prototype.$setCookie = function(name, value, expireDays){
                               let exdate = new Date();
