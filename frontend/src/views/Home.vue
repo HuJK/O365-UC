@@ -227,12 +227,14 @@
               <v-card>
                 <v-card-title class="headline grey lighten-3">Account Infomation</v-card-title>
                 <v-card-text>
-                  This is your account infomaion. This password will expire in 30 days, please change it before it expire.:
+                  This is your account infomaion. This password will expire in 30 days, change it before expiration:
                 </v-card-text>
                 <v-card-text>
                   Username: {{reg_username}}
                   <br/>
                   Password: {{reg_password}}
+                  <br/>
+                  <a href="https://www.office.com/?auth=2" target="_blank">Click me to login</a>
                 </v-card-text>
                 <v-divider></v-divider>
                 <v-card-actions>
@@ -365,7 +367,7 @@
       agreement: false,
       dialog: false,
       form: false,
-
+      
       username: "",
       username_checked :false,
       username_lock : false,
