@@ -1,7 +1,7 @@
 # O365-UC
 Office 365 Account Registration Portal
 
-### Usage
+## Usage
 
 
 #### Install
@@ -64,7 +64,7 @@ If you change this:
   ```
   , any prime number wil be considered to a valid invite code.
   
- #### Setup:
+ ## Setup:
  
 
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/01.PNG)
