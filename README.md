@@ -35,7 +35,7 @@ Make sure these files only contain numbers. No any newline , or any characters o
 
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/15.PNG)
 
-Or you can write your own invite code check logic. Just edit line 86 to line 103 at the ```backend/o365_creater_auth.py``` file:
+Or you can write your own invite code check algorithm. Just edit line 86 to line 103 at the ```backend/o365_creater_auth.py``` file:
 
 If you change this:
 ```python
@@ -63,9 +63,9 @@ If you change this:
  ```python
     def check(self,password):
         import math
-        return 0== sum([ True if int(password)%factor == 0 else False for factor in ( [2] + list(range(3,int(math.sqrt(int(password))),2) )) ])
+        return 0== sum([ True if int(password)%factor == 0 else False for factor in ( [2] + list(range(3,int(math.sqrt(int(password))),2) )) ]) and int(password) > 1000000000
   ```
-  , any prime number wil be considered to a valid invite code.
+  , any prime number which > 1000000000 wil be considered to a valid invite code.
   
  ## Setup:
  
