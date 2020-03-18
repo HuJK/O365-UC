@@ -69,7 +69,7 @@ If you change this:
   
  ## Setup:
  
-
+Default password: ```admin```
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/01.PNG)
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/02.PNG)
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/03.PNG)
