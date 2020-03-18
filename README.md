@@ -7,8 +7,9 @@ Office 365 Account Registration Portal
 #### Install
 
 ```bash
-pip3 install tornado
-apt install tmux
+sudo apt install tmux python3 python3-pip
+sudo pip3 install tornado
+
 
 git clone https://github.com/HuJK/O365-UC.git
 cd O365-UC/backend/
