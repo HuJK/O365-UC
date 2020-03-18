@@ -19,6 +19,8 @@ tmux new -d -s o365 python3 o365-creater_api.py
 python3 o365-creater_api.py
 ```
 
+Then connect to [https://127.0.0.1:12536](https://127.0.0.1:12536) 
+
 #### Create accounts by invite code:
 
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/14.PNG)
