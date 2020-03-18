@@ -8,7 +8,7 @@ sudo pip3 install tornado
 ```
 
 ## Installation
-```
+```bash
 git clone https://github.com/HuJK/O365-UC.git
 cd O365-UC/backend/
 # Running in the backgroung
