@@ -251,7 +251,7 @@
               </v-card>
             </v-dialog>
           </v-card>
-          <v-overlay opacity=0.9 color="black" :value="!invite_success">
+          <v-overlay opacity=0.6 color="black" :value="!invite_success && server_init_status">
             <v-card       
               class="mx-auto"
               color="white"
@@ -307,12 +307,14 @@
           </v-overlay>
 
 
-          <v-overlay opacity=0.3 color="black" :value="!server_init_status">
+          <v-overlay opacity=0.6 color="black" :value="!server_init_status" >
             <v-card       
               class="mx-auto"
-              color="red accent-1"
+              light
+              :color="server_init_pending ? undefined : 'red'"
               min-width=400
               shaped
+              :loading="server_init_pending"
             >
               <v-col>
                 <p color="green" class="headline mb-1">{{server_init_status_title}}</p>
@@ -321,6 +323,7 @@
                   <v-btn
                     color="error"
                     to="/admin"
+                    v-if="!server_init_pending"
                   >
                     admin panel
                   </v-btn>
@@ -402,10 +405,10 @@
 
       submited : false,
 
-
+      server_init_pending : true,
       server_init_status : false,
-      server_init_status_title : "Checking Server status",
-      server_init_status_text : "Checking Server token status, please wait.",
+      server_init_status_title : "Connecting to Server",
+      server_init_status_text : "Checking server token status.<br/>Please wait....",
 
       domains:[
         "1.example.com",
@@ -483,7 +486,7 @@
             else{
               self.server_init_status = false;
               self.server_init_status_title="Invalid Server Token";
-              self.server_init_status_text = "Please contact admin to grent permission.";
+              self.server_init_status_text = "Please contact admin to grent permissions.";
             }
           }
           
@@ -492,13 +495,15 @@
           if (error.response) {
             self.server_init_status = false;
             self.server_init_status_title="Invalid Server Token";
-            self.server_init_status_text = "Please contact admin to grent permission again.";
+            self.server_init_status_text = "Please contact admin to grent permissions.";
           }
           else{
             self.server_init_status = false;
             self.server_init_status_title="Connection Error";
-            self.server_init_status_text = "Unable to connect to server.";
+            self.server_init_status_text = "Unable to connect to the server.";
           }
+        }).finally(function(){
+          self.server_init_pending = false;
         })
       },
       updatePage(){
