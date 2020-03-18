@@ -1,16 +1,14 @@
 # O365-UC
 Office 365 Account Registration Portal
 
-## Usage
-
-
-#### Install
-
+## requirement
 ```bash
 sudo apt install tmux python3 python3-pip
 sudo pip3 install tornado
+```
 
-
+## Installation
+```
 git clone https://github.com/HuJK/O365-UC.git
 cd O365-UC/backend/
 # Running in the backgroung
@@ -18,6 +16,8 @@ tmux new -d -s o365 python3 o365-creater_api.py
 # Running in the foreground
 python3 o365-creater_api.py
 ```
+
+## Usage
 
 Then connect to [https://127.0.0.1:12536](https://127.0.0.1:12536) 
 
@@ -69,7 +69,8 @@ If you change this:
   
  ## Setup:
  
-Default password: ```admin```
+ ##### Default password: ```admin```
+
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/01.PNG)
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/02.PNG)
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/03.PNG)
