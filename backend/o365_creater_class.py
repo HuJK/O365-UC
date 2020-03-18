@@ -20,7 +20,7 @@ class o365():
             self.newapp_url = "https://apps.dev.microsoft.com/?deepLink=/quickstart/graphIO"
             self.api_url = 'https://graph.microsoft.com/v1.0'
             self.oauth_url = 'https://login.microsoftonline.com/common/oauth2/v2.0'
-            self.appName = "O365 Account Creater"
+            self.appName = "Office 365 Account Registration Portal"
             self.redirect_uri = ""
             self.maxAllowedLicense = 1
             self.availableDomains = []
