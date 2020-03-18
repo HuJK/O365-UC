@@ -27,7 +27,7 @@ Then connect to [https://127.0.0.1:12536](https://127.0.0.1:12536)
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/12.PNG)
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/13.PNG)
 
-#### Edit invite code:
+#### Configure invite code:
 
 In the ```invite_code``` folder, each filename is a code and the content is the usage count.
 
