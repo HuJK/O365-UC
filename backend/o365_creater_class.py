@@ -278,6 +278,12 @@ class o365():
         client = tornado.httpclient.AsyncHTTPClient()
         response = await client.fetch(self.api_url + "/users/" + urllib.parse.quote(userPrincipalName,safe="") + "/assignLicense" , method="POST",body = json.dumps(params) , headers = headers)
         return json.loads(response.body)
+    async def deleteUser(self,userPrincipalName):
+        headers = {"Authorization":"Bearer " + await self.getToken(),
+                   'Content-Type': 'application/json'}
+        client = tornado.httpclient.AsyncHTTPClient()
+        response = await client.fetch(self.api_url + "/users/" + urllib.parse.quote(userPrincipalName,safe="") , method="DELETE", headers = headers)
+        return json.loads(response.body)
     async def createUserWithLicense(self,username,domain,Fname,Lname,displayName,Loc,skuId):
         print("createUser")
         ret = await self.createUser(username + "@" + domain, displayName)
