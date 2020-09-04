@@ -63,10 +63,6 @@ Just edit line 86 to line 103 at the ```backend/o365_creater_auth.py``` file:
 Return True or False.
 
 
-#### Configure CAPTCHA:
-
-![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/16.PNG)
-
  ## Setup:
  
  ##### Default password: ```admin```
@@ -81,3 +77,12 @@ Return True or False.
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/08.PNG)
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/09.PNG)
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/10.PNG)
+
+#### Configure CAPTCHA:
+
+###### google reCAPTCHA v2:
+
+![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/16.PNG)
+
+###### hCAPTCHA:
+![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/17.PNG)
