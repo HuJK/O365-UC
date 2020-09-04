@@ -457,7 +457,7 @@
       source: String,
     },
     data: () => ({
-      url_base : "https://o365.dlmsl.csie.ncu.edu.tw",
+      url_base : location.origin,
       cookie_prefix :"o365_uca",
       form_appinfo : false,
       CAPTCHA_response_name : "" ,
