@@ -37,7 +37,7 @@ Make sure these files only contain numbers. No any newline , or any characters o
 
 If you want to use your own invite code check process, like connect to mysql instead of txt based 
 
-Just edit line 86 to line 103 at the ```backend/o365_creater_auth.py``` file:
+Just edit line 131 to line 155 at the ```backend/o365_creater_auth.py``` file:
 
 ```python
     def check(self,password):
@@ -60,25 +60,23 @@ Just edit line 86 to line 103 at the ```backend/o365_creater_auth.py``` file:
         return False
   ```
 
-Return True or False.
+Please return True or False.
 
 
- ## Setup:
+## Setup:
  
- ##### Default password: ```admin```
+##### Default password: ```admin```
 
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/01.PNG)
-![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/02.PNG)
-![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/03.PNG)
-![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/04.PNG)
-![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/05.PNG)
-![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/06.PNG)
-![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/07.PNG)
-![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/08.PNG)
-![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/09.PNG)
-![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/10.PNG)
+![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/Setup.PNG)
 
-#### Configure CAPTCHA:
+Now, you can configure registration settings or CAPTCHA settings
+
+#### Registration settings
+
+![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/09.PNG)
+
+#### CAPTCHA:
 
 ###### google reCAPTCHA v2:
 
@@ -86,3 +84,7 @@ Return True or False.
 
 ###### hCAPTCHA:
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/17.PNG)
+
+#### Admin password
+
+![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/10.PNG)
