@@ -61,7 +61,7 @@
       </v-list>
     </v-navigation-drawer>
 
-    <v-content>
+    <v-main>
       <v-container
         fluid
         class="grey lighten-4"
@@ -307,7 +307,37 @@
         </v-card>
 
 
-
+        <v-card
+          class="mx-auto"
+          max-width="3440000"
+          outlined
+        >
+          <v-list-item three-line>
+            <v-list-item-content>
+              <v-list-item-title class="headline mb-1">CAPTCHA Settings</v-list-item-title>
+              <v-col>
+                <v-switch v-model="CAPTCHA_enable_g" label="Enable CAPTCHA for guest invite code redemption"></v-switch>
+                <v-switch v-model="CAPTCHA_enable_p" label="Enable CAPTCHA for admin panel login"></v-switch>
+                <v-text-field label="Frontend response id"  v-model="CAPTCHA_front_end_response_field" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
+                <v-text-field label="Frontend html injection(HEAD)"  v-model="CAPTCHA_frontend_head_html" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
+                <v-text-field label="Frontend html injection(FORM)"  v-model="CAPTCHA_frontend_login_html" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
+                <v-textarea auto-grow label="Backend verify api description"  v-model="CAPTCHA_verify_api" :rules="[CAPTCHA_JSONerr]"></v-textarea>
+                <v-row justify="end">
+                  <v-btn
+                    :loading="setCAPTCHA_loading"
+                    :disabled="setCAPTCHA_loading || CAPTCHA_front_end_response_field.length === 0 || CAPTCHA_frontend_head_html.length === 0 || CAPTCHA_frontend_login_html.length === 0 || CAPTCHA_JSONerr !== true"
+                    :color="setCAPTCHA_color"
+                    class="ma-2 white--text"
+                    @click="setCAPTCHA"
+                  >
+                    Save
+                  <v-icon right >{{setCAPTCHA_icon}}</v-icon>
+                  </v-btn>
+                </v-row>
+              </v-col>
+            </v-list-item-content>
+          </v-list-item>
+        </v-card>
 
         <v-card
           class="mx-auto"
@@ -327,11 +357,11 @@
                   value="Change Password"
                 ></v-text-field>
                 <v-text-field label="Old password" :type="old_password_type"  v-model="Old_password" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
-                <v-text-field label="new password" type="password"            v-model="New_password" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
+                <v-text-field label="new password" type="password"            v-model="New_password" :rules="[ v => v.length >= 6 || 'Password length must >= 6']"></v-text-field>
                 <v-row justify="end">
                   <v-btn
                     :loading="setPassword_loading"
-                    :disabled="setPassword_loading"
+                    :disabled="setPassword_loading || Old_password.length == 0 || New_password.length < 6"
                     :color="setPassword_color"
                     class="ma-2 white--text"
                     @click="setPassword"
@@ -360,6 +390,12 @@
               shaped
             >
               <v-col>
+                <v-col
+                    ma-0 pa-0
+                    no-gutters
+                    class="CAPTCHAfield"
+                    align='center'
+                >
                 <v-text-field 
                   color="blue" 
                   :error-messages="login_errmsg" 
@@ -369,6 +405,7 @@
                   label="Password"
                   @keyup.enter="login"
                 ></v-text-field>
+                </v-col>
                 <v-row justify="center">
                   <v-btn
                     :loading="login_loading"
@@ -409,7 +446,7 @@
           </v-overlay>
 
       </v-container>
-    </v-content>
+    </v-main>
   </v-app>
 </template>
 
@@ -420,9 +457,27 @@
       source: String,
     },
     data: () => ({
-      url_base : location.origin,
+      url_base : "https://o365.dlmsl.csie.ncu.edu.tw",
       cookie_prefix :"o365_uca",
       form_appinfo : false,
+      CAPTCHA_response_name : "" ,
+      CAPTCHA_enable_p: false,
+      CAPTCHA_enable_g: false,
+      CAPTCHA_front_end_response_field : "g-recaptcha-response",
+      CAPTCHA_verify_api : JSON.stringify({
+                "url" : "https://www.google.com/recaptcha/api/siteverify",
+                "method":"POST",
+                "url_params":{
+                    "secret":"6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe",
+                    "response":"__front_end_response__"
+                },
+                "body_params":{},
+                "headers" : {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            }, null, 4),
+      CAPTCHA_frontend_head_html : "<script src='https://www.google.com/recaptcha/api.js'> </ script>" , 
+      CAPTCHA_frontend_login_html : "<div class='g-recaptcha' data-sitekey=6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI></div>",
       password_in : "",
       Old_password : "",
       New_password : "",
@@ -450,6 +505,9 @@
       Admin_setting_loading:false,
       Admin_setting_color:"blue",
       Admin_setting_icon:"mdi-cloud-upload",
+      setCAPTCHA_loading:false,
+      setCAPTCHA_color:"blue",
+      setCAPTCHA_icon:"mdi-cloud-upload",
       old_password_type : "password",
       setPassword_loading:false,
       setPassword_color:"blue",
@@ -475,6 +533,7 @@
         { icon: 'mdi-ticket', text: 'Token' },
         { divider: true },
         { icon: 'mdi-account-plus', text: 'Guest Settings' },
+        { icon: 'mdi-robot', text: 'CAPTCHA Settings' },
         { icon: 'mdi-cog', text: 'Settings' }
       ],
       domains:[
@@ -507,6 +566,15 @@
       setDomainsAndLicences_disable(){return this.setDomainsAndLicences_loading || (this.selected_domains.length === 0) || (this.selected_licences.length === 0) },
       maxAllowedLicenseList() {
           return [...Array(this.selected_licences.length).keys()].map( function (x){return x+1});
+      },
+      CAPTCHA_JSONerr(){
+        try{
+          JSON.parse(this.CAPTCHA_verify_api);
+          return true;
+        }
+        catch(err){
+          return err.message;
+        }
       }
     },
     mounted: function(){
@@ -518,29 +586,37 @@
       },
       login() {
         var self = this;
-        this.login_loading=true;
-        axios.post(this.api_path + "login",null,{params : {password : this.password_in}}).then(
-          function(res){
-            self.$setCookie(self.cookie_prefix + "session_id", res.data["session_id"]);
-            self.updatePage();
-          })
-        .catch(function (error){
-          if (error.response) {
-            if(error.response.status === 401){
-              self.login_errmsg = error.response.data.error_description;
+        if(this.CAPTCHA_response_name === "" || document.getElementsByName(this.CAPTCHA_response_name)[0].value.length > 0){
+          this.login_loading=true;
+          let CAPTCHA = document.getElementsByName(this.CAPTCHA_response_name).length > 0?document.getElementsByName(this.CAPTCHA_response_name)[0].value:"undefined";
+          axios.post(this.api_path + "login",null,{params : {password : this.password_in,"CAPTCHA":CAPTCHA}}).then(
+            function(res){
+              self.$setCookie(self.cookie_prefix + "session_id", res.data["session_id"]);
+              self.updatePage();
+            })
+          .catch(function (error){
+            if (error.response) {
+              if(error.response.status === 401){
+                self.login_errmsg = error.response.data.error_description;
+              }
+              else{
+                self.login_errmsg = "Error code:" + error.response.status;
+              }
             }
             else{
-              self.login_errmsg = "Error code:" + error.response.status;
+              console.log(error);
+              self.login_errmsg = "Network Error."
             }
-          }
-          else{
-            console.log(error);
-            self.login_errmsg = "Network Error."
-          }
-        })
-        .finally(function(){
-          self.login_loading=false;
-        })
+          })
+          .finally(function(){
+            self.login_loading=false;
+          })
+        }
+        else{
+          self.error_msg_bool = true;
+          self.error_msg_title="Captcha Required";
+          self.error_msg="Please verify that you are not a robot.";
+        }
       },
     logoutAdmin(){
       this.$delCookie(this.cookie_prefix + "session_id");
@@ -548,6 +624,44 @@
     },
     updatePage(){
       var self = this;
+        if (self.CAPTCHA_response_name === ""){
+          axios.get(this.api_path + "login",{params : {get_CAPTCHA : "p"}}).then(
+            function(res){
+              document.getElementsByTagName('head')[0].appendChild( document.createRange().createContextualFragment( res.data["CAPTCHA_frontend_head_html"] ));
+              document.getElementsByClassName('CAPTCHAfield')[0].appendChild( document.createRange().createContextualFragment( res.data["CAPTCHA_frontend_login_html"] ));
+              
+              self.CAPTCHA_response_name = res.data["CAPTCHA_front_end_response_field"];
+            }
+            
+          ).catch(function(error){
+            console.log(error);
+          })
+        }
+        if (self.CAPTCHA_response_name !== "" && document.getElementsByName(self.CAPTCHA_response_name).length === 0){
+          axios.get(this.api_path + "login",{params : {get_CAPTCHA : "p"}}).then(
+            function(res){
+              document.getElementsByClassName('CAPTCHAfield')[0].appendChild( document.createRange().createContextualFragment( res.data["CAPTCHA_frontend_login_html"] ));
+            }
+            
+          ).catch(function(error){
+            console.log(error);
+          })
+        }
+
+      axios.get(this.api_path + "CAPTCHA",{params : {session_id : this.$getCookie(self.cookie_prefix + "session_id")}}).then(
+        function(res){
+          self.CAPTCHA_enable_p = res.data["p"]["CAPTCHA_enable"];
+          self.CAPTCHA_enable_g = res.data["g"]["CAPTCHA_enable"];
+          self.CAPTCHA_front_end_response_field = res.data["g"]["CAPTCHA_front_end_response_field"];
+          self.CAPTCHA_verify_api = JSON.stringify( res.data["g"]["CAPTCHA_verify_api"],null,4);
+          self.CAPTCHA_frontend_head_html = res.data["g"]["CAPTCHA_frontend_head_html"];
+          self.CAPTCHA_frontend_login_html = res.data["g"]["CAPTCHA_frontend_login_html"];
+        }
+        
+      ).catch(function(error){
+        console.log(error);
+      })
+
       axios.get(this.api_path + "Info",{params : {session_id : this.$getCookie(self.cookie_prefix + "session_id")}}).then(
         function(res){
           self.appName = res.data["appName"];
@@ -903,6 +1017,54 @@
     Admin_setting(){
 
     },
+    setCAPTCHA(){
+      var self = this;
+      let new_config_p= {
+        "CAPTCHA_enable":this.CAPTCHA_enable_p,
+        "CAPTCHA_front_end_response_field":this.CAPTCHA_front_end_response_field,
+        "CAPTCHA_verify_api":JSON.parse(this.CAPTCHA_verify_api),
+        "CAPTCHA_frontend_head_html":this.CAPTCHA_frontend_head_html,
+        "CAPTCHA_frontend_login_html":this.CAPTCHA_frontend_login_html
+      };
+      let new_config_g = JSON.parse(JSON.stringify(new_config_p));
+      new_config_g["CAPTCHA_enable"] = this.CAPTCHA_enable_g;
+      this.setCAPTCHA_loading=true;
+      axios.put(this.api_path + "CAPTCHA",null,{params : {
+        session_id : self.$getCookie(self.cookie_prefix + "session_id"),
+        new_config: {
+          "p":new_config_p,
+          "g":new_config_g
+        }
+        
+        }}
+      ).then(
+        function(){
+          self.setCAPTCHA_color = "green";
+          self.setCAPTCHA_icon = "mdi-checkbox-marked-circle-outline"
+        })
+      .catch(function (error){
+        if (error.response) {
+          if (error.response.data["error_description"] != undefined){
+            self.error_msg_title = error.response.data["error"];
+            self.error_msg = error.response.data["error_description"].replace(/\n/g, "<br/>");
+          }
+          else{
+            self.error_msg_title = "Error";
+            self.error_msg = error.response.data;
+          }
+        }
+        else{
+          self.error_msg_title = "Error";
+          self.error_msg = error.toString();
+        }
+        self.error_msg_bool = true;
+        console.log(error);
+      })
+      .finally(function(){
+        self.setCAPTCHA_loading=false;
+        self.updatePage();
+      })
+    },
     setPassword(){
       var self = this;
       axios.put(this.api_path + "login",null,{params : {session_id : self.$getCookie(self.cookie_prefix + "session_id"),password: self.New_password , password_old : self.Old_password}}).then(
@@ -930,7 +1092,7 @@
         console.log(error);
       })
       .finally(function(){
-        self.initToken_step2();
+        self.updatePage();
       })
     }
   }

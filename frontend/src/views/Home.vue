@@ -29,7 +29,7 @@
           <v-icon>mdi-exit-to-app</v-icon>
         </v-btn>
       </v-app-bar>
-      <v-content>
+      <v-main>
           <v-card
             class="mx-auto"
             style="max-width: 800px;"
@@ -260,26 +260,34 @@
               min-width=400
               shaped
             >
-              <v-col>
-                <v-text-field 
-                  color="blue" 
-                  :error-messages="invite_errmsg" 
-                  v-model="password_in" 
-                  outlined 
-                  label="Invite Code"
-                  @keyup.enter="SubmitInviteCode"
-                ></v-text-field>
-                <v-row justify="center">
-                  <v-btn
-                    :loading="invite_loading"
-                    color="error"
-                    @click="SubmitInviteCode"
+              <v-form>
+                <v-col>
+                  <v-col
+                    ma-0 pa-0
+                    no-gutters
+                    class="CAPTCHAfield"
+                    align='center'
                   >
-                    Submit
-                  </v-btn>
-                </v-row>
-              </v-col>
-
+                    <v-text-field 
+                      color="blue" 
+                      :error-messages="invite_errmsg" 
+                      v-model="password_in" 
+                      outlined 
+                      label="Invite Code"
+                      @keyup.enter="SubmitInviteCode"
+                    ></v-text-field>
+                  </v-col>
+                  <v-row justify="center">
+                    <v-btn
+                      :loading="invite_loading"
+                      color="error"
+                      @click="SubmitInviteCode"
+                    >
+                      Submit
+                    </v-btn>
+                  </v-row>
+                </v-col>
+              </v-form>
             </v-card>
           </v-overlay>
           <v-overlay opacity=0.9 color="black" :value="error_msg_bool">
@@ -333,7 +341,7 @@
             </v-card>
           </v-overlay>
 
-        </v-content>
+        </v-main>
 
 
 
@@ -358,6 +366,7 @@
     data: () => ({
       url_base : location.origin,
       cookie_prefix: "o365_ucg",
+      CAPTCHA_response_name : "" ,
       invite_success : false,
       invite_loading:false,
       invite_errmsg:"",
@@ -447,29 +456,38 @@
     methods: {
       SubmitInviteCode(){
         var self = this;
-        this.invite_loading=true;
-        axios.post(this.api_path + "guestlogin",null,{params : {password : this.password_in}}).then(
-          function(res){
-            self.$setCookie( self.cookie_prefix + "session_id", res.data["session_id"]);
-            self.invite_success=true;
-            self.updatePage();
-          })
-        .catch(function (error){
-          if (error.response) {
-            if(error.response.status === 401){
-              self.invite_errmsg = error.response.data.error_description;
+        
+        if(this.CAPTCHA_response_name === "" || document.getElementsByName(this.CAPTCHA_response_name)[0].value.length > 0){
+          this.invite_loading=true;
+          let CAPTCHA = document.getElementsByName(this.CAPTCHA_response_name).length > 0?document.getElementsByName(this.CAPTCHA_response_name)[0].value:"undefined";
+          axios.post(this.api_path + "guestlogin",null,{params : {password : this.password_in,"CAPTCHA":CAPTCHA}}).then(
+            function(res){
+              self.$setCookie( self.cookie_prefix + "session_id", res.data["session_id"]);
+              self.invite_success=true;
+              self.updatePage();
+            })
+          .catch(function (error){
+            if (error.response) {
+              if(error.response.status === 401){
+                self.invite_errmsg = error.response.data.error_description;
+              }
+              else{
+                self.invite_errmsg = "Error code:" + error.response.status;
+              }
             }
             else{
-              self.invite_errmsg = "Error code:" + error.response.status;
+              self.invite_errmsg = "Network Error."
             }
-          }
-          else{
-            self.invite_errmsg = "Network Error."
-          }
-        })
-        .finally(function(){
-          self.invite_loading=false;
-        })
+          })
+          .finally(function(){
+            self.invite_loading=false;
+          })
+        }
+        else{
+          self.error_msg_bool = true;
+          self.error_msg_title="Captcha Required";
+          self.error_msg="Please verify that you are not a robot.";
+        }
       },
       logoutGuest(){
         this.$delCookie(this.cookie_prefix + "session_id");
@@ -508,6 +526,35 @@
       },
       updatePage(){
         var self = this;
+        if (self.CAPTCHA_response_name === ""){
+          axios.get(this.api_path + "login",{params : {get_CAPTCHA : "g"}}).then(
+            function(res){
+              document.getElementsByTagName('head')[0].appendChild( document.createRange().createContextualFragment( res.data["CAPTCHA_frontend_head_html"] ));
+              document.getElementsByClassName('CAPTCHAfield')[0].appendChild( document.createRange().createContextualFragment( res.data["CAPTCHA_frontend_login_html"] ));
+              
+              self.CAPTCHA_response_name = res.data["CAPTCHA_front_end_response_field"];
+            }
+            
+          ).catch(function(error){
+            console.log(error);
+          })
+        }
+        if (self.CAPTCHA_response_name !== "" && document.getElementsByName(self.CAPTCHA_response_name).length === 0){
+          axios.get(this.api_path + "login",{params : {get_CAPTCHA : "g"}}).then(
+            function(res){
+              document.getElementsByClassName('CAPTCHAfield')[0].appendChild( document.createRange().createContextualFragment( res.data["CAPTCHA_frontend_login_html"] ));
+            }
+            
+          ).catch(function(error){
+            console.log(error);
+          })
+        }
+
+
+
+
+
+
         axios.get(this.api_path + "getRegInfo",{params : {guest_session_id : this.$getCookie(self.cookie_prefix + "session_id")}}).then(
           function(res){
             self.invite_success=true;

@@ -38,8 +38,16 @@ class loginHandler(RequestHandlerWithCROS):
     def __init__(self, *args, **kwargs):
         super(loginHandler, self).__init__(*args, **kwargs)
         self.p = p
+        self.g = g
     async def get(self, *args, **kwargs): 
         try:
+            get_CAPTCHA = self.get_argument('get_CAPTCHA',  default=False)
+            if get_CAPTCHA == "p":
+                self.write(json.dumps(self.p.getCAPTCHAhtml(),indent=2, ensure_ascii=False))
+                return
+            elif get_CAPTCHA == "g":
+                self.write(json.dumps(self.g.getCAPTCHAhtml(),indent=2, ensure_ascii=False))
+                return
             password = self.get_argument('password', True)
             session_id = self.get_argument('session_id', True)
             self.p.checkLoginErr(self,session_id)
@@ -56,7 +64,7 @@ class loginHandler(RequestHandlerWithCROS):
             password_old = self.get_argument('password_old', "")
             session_id = self.get_argument('session_id', True)
             self.p.checkLoginErr(self,session_id)
-            self.p.login(self,password_old,checkOnly=True)
+            await self.p.login(self,password_old,None,checkOnly=True)
             self.p.setPassword(password)
             self.write("OK")
         except HTTPClientError as e:
@@ -68,7 +76,9 @@ class loginHandler(RequestHandlerWithCROS):
     async def post(self, *args, **kwargs): 
         try:
             password = self.get_argument('password', True)
-            self.write(json.dumps(self.p.login(self,password), indent=2, ensure_ascii=False))
+            CAPTCHA = self.get_argument("CAPTCHA", default="")
+            ret = await self.p.login(self,password,CAPTCHA)
+            self.write(json.dumps(ret, indent=2, ensure_ascii=False))
         except HTTPClientError as e:
             self.clear()
             self.set_status(e.response.code)
@@ -82,10 +92,12 @@ class loginHandler(RequestHandlerWithCROS):
             del self.p.loginUser[session_id]
             self.write("OK")
         except HTTPClientError as e:
+            print(e)
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
         except KeyError as e:
+            print(e)
             return
 class guestloginHandler(loginHandler):
     def set_default_headers(self):
@@ -93,9 +105,45 @@ class guestloginHandler(loginHandler):
     def __init__(self, *args, **kwargs):
         super(loginHandler, self).__init__(*args, **kwargs)
         self.p = g
-        
 
         
+        
+
+class CAPTCHAHandler(RequestHandlerWithCROS):
+    def __init__(self, *args, **kwargs):
+        super(CAPTCHAHandler, self).__init__(*args, **kwargs)
+        self.p = p
+        self.g = g
+    async def get(self, *args, **kwargs): 
+        try:
+            session_id = self.get_argument('session_id', True)
+            self.p.checkLoginErr(self,session_id)
+            ret = {
+                "p":self.p.getCAPTCHAsettings(),
+                "g":self.g.getCAPTCHAsettings(),
+            }
+            self.write(json.dumps(ret, indent=2, ensure_ascii=False))
+        except HTTPClientError as e:
+            self.clear()
+            self.set_status(e.response.code)
+            self.finish(e.response.body)
+        except KeyError as e:
+            return
+    async def put(self, *args, **kwargs): 
+        try:
+            session_id = self.get_argument('session_id', True)
+            new_config = json.loads(self.get_argument("new_config", True))
+            self.p.checkLoginErr(self,session_id)
+            self.p.setCAPTCHAsettings(new_config["p"])
+            self.g.setCAPTCHAsettings(new_config["g"])
+            self.write("OK")
+        except HTTPClientError as e:
+            self.clear()
+            self.set_status(e.response.code)
+            self.finish(e.response.body)
+        except KeyError as e:
+            return
+    
         
 def protect_info(info_in,protected_keys):
     info_out = json.loads(json.dumps(info_in))
@@ -369,6 +417,7 @@ if __name__ == '__main__':
     app = tornado.web.Application(handlers=[
         (r'/api/login', loginHandler),
         (r'/api/guestlogin', guestloginHandler),
+        (r'/api/CAPTCHA', CAPTCHAHandler),
         (r'/api/Info', setInfoHandler),
         (r'/api/getSecretIdUrl', getSecretIdUrl),
         (r'/api/setSecretId', setSecretHandler),

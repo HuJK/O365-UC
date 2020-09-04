@@ -3,7 +3,7 @@ Office 365 Account Registration Portal
 
 ## requirement
 ```bash
-sudo apt install tmux python3 python3-pip
+sudo apt-get install tmux python3 python3-pip
 sudo pip3 install tornado
 ```
 
@@ -35,9 +35,10 @@ Make sure these files only contain numbers. No any newline , or any characters o
 
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/15.PNG)
 
-Or you can write your own invite code check algorithm. Just edit line 86 to line 103 at the ```backend/o365_creater_auth.py``` file:
+If you want to use your own invite code check process, like connect to mysql instead of txt based 
 
-If you change this:
+Just edit line 86 to line 103 at the ```backend/o365_creater_auth.py``` file:
+
 ```python
     def check(self,password):
         i_path = os.path.join(self.invite_code_path,password)
@@ -58,15 +59,14 @@ If you change this:
                 return True
         return False
   ```
-  
- to this:
- ```python
-    def check(self,password):
-        import math
-        return 0== sum([ True if int(password)%factor == 0 else False for factor in ( [2] + list(range(3,int(math.sqrt(int(password))),2) )) ]) and int(password) > 1000000000
-  ```
-  , any prime number which > 1000000000 wil be considered to a valid invite code.
-  
+
+Return True or False.
+
+
+#### Configure CAPTCHA:
+
+![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/16.PNG)
+
  ## Setup:
  
  ##### Default password: ```admin```

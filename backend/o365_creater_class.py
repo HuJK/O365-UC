@@ -12,31 +12,34 @@ import tornado.httpclient
 from tornado.httpclient import HTTPClientError
 class o365():
     def __init__(self,config_path = "./config.json"):
+        
+        self.__dict__ = {
+                "newapp_url": "https://apps.dev.microsoft.com/?deepLink=/quickstart/graphIO",
+                "api_url": "https://graph.microsoft.com/v1.0",
+                "oauth_url": "https://login.microsoftonline.com/common/oauth2/v2.0",
+                "appName": "Office 365 Account Registration Portal",
+                "redirect_uri": "",
+                "maxAllowedLicense": 1,
+                "availableDomains": [],
+                "allDomains": [],
+                "availableLicences": [],
+                "allLicences": [],
+                "secret": "",
+                "client_id": "",
+                "code": "",
+                "code_update_time": 0,
+                "session_state": "",
+                "access_token ": "",
+                "refresh_token": "",
+                "expires_in": 0
+            }
         self.config_path = config_path
         if os.path.isfile(config_path):
             with open(config_path,"r") as config:
-                self.__dict__ = json.loads(config.read())
-        else:
-            self.newapp_url = "https://apps.dev.microsoft.com/?deepLink=/quickstart/graphIO"
-            self.api_url = 'https://graph.microsoft.com/v1.0'
-            self.oauth_url = 'https://login.microsoftonline.com/common/oauth2/v2.0'
-            self.appName = "Office 365 Account Registration Portal"
-            self.redirect_uri = ""
-            self.maxAllowedLicense = 1
-            self.availableDomains = []
-            self.allDomains = []
-            self.availableLicences = []
-            self.allLicences = []
-            self.secret=""
-            self.client_id=""
-            self.code=""
-            self.code_update_time=0
-            self.session_state=""
-            self.access_token  = ""
-            self.refresh_token = ""
-            self.expires_in = 0
-            with open(config_path,"w") as config:
-                config.write(json.dumps(self.__dict__,ensure_ascii=False,indent = 2))
+                self.__dict__ = { **self.__dict__ , **json.loads(config.read())}
+
+        with open(config_path,"w") as config:
+            config.write(json.dumps(self.__dict__,ensure_ascii=False,indent = 2))
     def setInfo(self,newInfo):
         for key in newInfo.keys():
             self.__dict__[key] = newInfo[key]
@@ -54,7 +57,7 @@ class o365():
                   "appName":self.appName,
                   "redirectUrl":self.redirect_uri,
                   "allowImplicitFlow":"false",
-                  "ru":urllib.parse.quote("https://developer.microsoft.com/en-us/graph/quick-start?appID=_appId_&appName=_appName_&redirectUrl=https://oneindex.github.io/&platform=option-php",safe="")
+                  "ru":urllib.parse.quote("https://developer.microsoft.com/en-us/graph/quick-start?appID=_appId_&appName=_appName_&redirectUrl="+self.redirect_uri+"/&platform=option-php",safe="")
                  }
         return newapp_url + urllib.parse.quote("?" + urllib.parse.urlencode(params,safe=":/%"),safe="")
     def setSecret(self,secret,client_id):
@@ -278,12 +281,6 @@ class o365():
         client = tornado.httpclient.AsyncHTTPClient()
         response = await client.fetch(self.api_url + "/users/" + urllib.parse.quote(userPrincipalName,safe="") + "/assignLicense" , method="POST",body = json.dumps(params) , headers = headers)
         return json.loads(response.body)
-    async def deleteUser(self,userPrincipalName):
-        headers = {"Authorization":"Bearer " + await self.getToken(),
-                   'Content-Type': 'application/json'}
-        client = tornado.httpclient.AsyncHTTPClient()
-        response = await client.fetch(self.api_url + "/users/" + urllib.parse.quote(userPrincipalName,safe="") , method="DELETE", headers = headers)
-        return json.loads(response.body)
     async def createUserWithLicense(self,username,domain,Fname,Lname,displayName,Loc,skuId):
         print("createUser")
         ret = await self.createUser(username + "@" + domain, displayName)
@@ -313,3 +310,4 @@ class o365():
         if successL == False:
             raise "successL == False"
         return ret
+    
