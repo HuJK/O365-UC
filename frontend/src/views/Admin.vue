@@ -1139,7 +1139,7 @@
 }
 [code_text] {
   font-family: Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New !important;
-  background: url("../assets/images/code_line_number.png");
+  background: url("/code_line_number.png");
   background-attachment: local;
   background-repeat: no-repeat;
   padding-left: 30px !important;
