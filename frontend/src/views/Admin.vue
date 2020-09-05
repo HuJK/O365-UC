@@ -314,7 +314,7 @@
               <v-col>
                 <v-switch v-model="CAPTCHA_enable_g" label="Enable CAPTCHA for guest invite code redemption"></v-switch>
                 <v-switch v-model="CAPTCHA_enable_p" label="Enable CAPTCHA for admin panel login"></v-switch>
-                <v-text-field label="Frontend response id"  v-model="CAPTCHA_front_end_response_field" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
+                <v-text-field label="Frontend CAPTCHA form field id"  v-model="CAPTCHA_front_end_response_field" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
                 <v-text-field label="Frontend HTML injection (HEAD)"  v-model="CAPTCHA_frontend_head_html" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
                 <v-text-field label="Frontend HTML injection (FORM)"  v-model="CAPTCHA_frontend_login_html" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
                 <v-textarea auto-grow label="Backend verify api request paramaters" code_text spellcheck="false" v-model="CAPTCHA_verify_api" :rules="[CAPTCHA_JSONerr]"></v-textarea>

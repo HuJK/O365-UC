@@ -4,17 +4,20 @@ Office 365 Account Registration Portal
 ## requirement
 ```bash
 sudo apt-get install tmux python3 python3-pip
-sudo pip3 install tornado
+sudo pip3 install tornado js2py
 ```
 
 ## Installation
 ```bash
 git clone https://github.com/HuJK/O365-UC.git
 cd O365-UC/backend/
-# Running in the backgroung
-tmux new -d -s o365 python3 o365-creater_api.py
+
 # Running in the foreground
 python3 o365-creater_api.py
+
+# Running in the backgroung
+# I am used to use tmux. You can use screen dtach & etc.
+tmux new -d -s o365 python3 o365-creater_api.py
 ```
 
 ## Usage
@@ -37,10 +40,13 @@ Make sure these files only contain numbers. No any newline , or any characters o
 
 If you want to use your own invite code check process, like connect to mysql instead of txt based 
 
-Just edit line 131 to line 155 at the ```backend/o365_creater_auth.py``` file:
+Just edit line 251 to line 271 at the ```backend/o365_creater_auth.py``` file:
 
 ```python
     def check(self,password):
+        if ".." in password:
+            # Security concerns
+            return False
         i_path = os.path.join(self.invite_code_path,password)
         if os.path.isfile(i_path):
             with open(i_path) as i_fileHendler:
@@ -77,6 +83,8 @@ Now, you can configure registration settings or CAPTCHA settings
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/09.PNG)
 
 #### CAPTCHA:
+
+##### It should be able to use most of CAPTCHA services. like google reCAPTCHA/hCAPTCHA/luosimao/腾讯云验证码. I tested google reCAPTCHA v2 and hCAPTCHA only.
 
 ###### google reCAPTCHA v2:
 
