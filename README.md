@@ -40,11 +40,12 @@ Make sure these files only contain numbers. No any newline , or any characters o
 
 If you want to use your own invite code check process, like connect to mysql instead of txt based 
 
-Just edit line 251 to line 271 at the ```backend/o365_creater_auth.py``` file:
+Just edit line 253 to line 274 at the ```backend/o365_creater_auth.py``` file:
 
 ```python
     def check(self,password):
-        if ".." in password:
+        if "." in password or "/" in password or "\\" in password:
+            # Do not use '.' '\' '/' character in your invite code due to
             # Security concerns
             return False
         i_path = os.path.join(self.invite_code_path,password)
