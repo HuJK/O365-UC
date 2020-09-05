@@ -125,6 +125,7 @@ function(HTTPResponse) {
             prcs.start()
             prcs.join(timeout=0.1)
             if prcs.is_alive():
+                prcs.terminate()
                 raise TimeoutError("TimeoutError: Maximum execution time exceeded in your code.")
         except Exception as e:
             errordict = {
@@ -202,6 +203,7 @@ function(HTTPResponse) {
                 prcs.start()
                 prcs.join(timeout=0.1)
                 if prcs.is_alive():
+                    prcs.terminate()
                     raise TimeoutError("TimeoutError: Maximum execution time exceeded in response_check_function.")
             except Exception as e:
                 errordict = {
@@ -249,7 +251,8 @@ class pwd_guest(pwd):
         with open(self.config_path,"w") as config:
             config.write(json.dumps(self.__dict__,ensure_ascii=False,indent = 2,default=lambda o:None))
     def check(self,password):
-        if ".." in password:
+        if "." in password or "/" in password or "\\" in password:
+            # Do not use '.' '\' '/' character in your invite code due to
             # Security concerns
             return False
         i_path = os.path.join(self.invite_code_path,password)

@@ -34,7 +34,9 @@ Then connect to [https://127.0.0.1:12536](https://127.0.0.1:12536)
 
 In the ```invite_code``` folder, each filename is a code and the content is the usage count.
 
-Make sure these files only contain numbers. No any newline , or any characters other than [0-9]
+Make sure these files only contain numbers. No any newline , or any characters other than ```[-0-9]```
+
+Negtive number means this invite_code can redeem infinity times.
 
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/15.PNG)
 
