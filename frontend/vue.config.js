@@ -9,12 +9,12 @@ module: {
           test: /\.(png|jpe?g|gif|ico)$/i,
           use: [
             {
-              loader: 'url-loader',
+              loader: 'file-loader',
               options: {
                 name: 'files/[name].[ext]'
               }
-            }
-          ]
+            },
+          ],
         }
       ]
     }
