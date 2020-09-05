@@ -69,7 +69,7 @@ Just edit line 251 to line 271 at the ```backend/o365_creater_auth.py``` file:
 Please return True or False.
 
 
-## Setup:
+## Initial Setup:
  
 ##### Default password: ```admin```
 
@@ -84,7 +84,11 @@ Now, you can configure registration settings or CAPTCHA settings
 
 #### CAPTCHA:
 
-##### It should be able to use most of CAPTCHA services. like google reCAPTCHA/hCAPTCHA/luosimao/腾讯云验证码. I tested google reCAPTCHA v2 and hCAPTCHA only.
+##### It should be able to work at most of CAPTCHA services. 
+
+##### Like google reCAPTCHA/hCAPTCHA/luosimao/腾讯云验证码. 
+
+##### I only tested google reCAPTCHA v2 and hCAPTCHA.
 
 ###### google reCAPTCHA v2:
 
