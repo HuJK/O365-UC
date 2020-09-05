@@ -11,7 +11,7 @@
             alt="Vuetify Logo"
             class="shrink mr-2"
             contain
-            src="https://blobs.officehome.msocdn.com/images/content/images/favicon-8f211ea639.ico"
+            src="../assets/images/logo.ico"
             transition="scale-transition"
             width="40"
           />
@@ -467,17 +467,21 @@
               self.updatePage();
             })
           .catch(function (error){
+
             if (error.response) {
-              if(error.response.status === 401){
-                self.invite_errmsg = error.response.data.error_description;
+              if (error.response.data["error_description"] != undefined){
+                self.invite_errmsg=error.response.data["error"] + ": " + error.response.data["error_description"];
               }
               else{
-                self.invite_errmsg = "Error code:" + error.response.status;
+                self.invite_errmsg = error.response.data;
               }
             }
             else{
+              console.log(error);
               self.invite_errmsg = "Network Error."
             }
+
+
           })
           .finally(function(){
             self.invite_loading=false;

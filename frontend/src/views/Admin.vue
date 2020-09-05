@@ -9,10 +9,6 @@
       <span class="title ml-3 mr-5">Office 365 Account Registration Portal&nbsp;<span class="font-weight-light">Admin Panel</span></span>
       <v-spacer />
 
-
-
-
-
       <v-btn icon color="grey lighten-2" to="/">
         <v-icon>mdi-account-plus</v-icon>
       </v-btn>
@@ -319,13 +315,14 @@
                 <v-switch v-model="CAPTCHA_enable_g" label="Enable CAPTCHA for guest invite code redemption"></v-switch>
                 <v-switch v-model="CAPTCHA_enable_p" label="Enable CAPTCHA for admin panel login"></v-switch>
                 <v-text-field label="Frontend response id"  v-model="CAPTCHA_front_end_response_field" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
-                <v-text-field label="Frontend html injection(HEAD)"  v-model="CAPTCHA_frontend_head_html" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
-                <v-text-field label="Frontend html injection(FORM)"  v-model="CAPTCHA_frontend_login_html" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
-                <v-textarea auto-grow label="Backend verify api description"  v-model="CAPTCHA_verify_api" :rules="[CAPTCHA_JSONerr]"></v-textarea>
+                <v-text-field label="Frontend HTML injection (HEAD)"  v-model="CAPTCHA_frontend_head_html" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
+                <v-text-field label="Frontend HTML injection (FORM)"  v-model="CAPTCHA_frontend_login_html" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
+                <v-textarea auto-grow label="Backend verify api request paramaters" code_text spellcheck="false" v-model="CAPTCHA_verify_api" :rules="[CAPTCHA_JSONerr]"></v-textarea>
+                <v-textarea auto-grow label="Backend verify api response check function (ECMAScript 5.1)" code_text spellcheck="false" v-model="CAPTCHA_verify_func" @input="CAPTCHA_verify_func_change" :rules="[CAPTCHA_verify_func_pass] "></v-textarea>
                 <v-row justify="end">
                   <v-btn
                     :loading="setCAPTCHA_loading"
-                    :disabled="setCAPTCHA_loading || CAPTCHA_front_end_response_field.length === 0 || CAPTCHA_frontend_head_html.length === 0 || CAPTCHA_frontend_login_html.length === 0 || CAPTCHA_JSONerr !== true"
+                    :disabled="setCAPTCHA_loading || CAPTCHA_front_end_response_field.length === 0 || CAPTCHA_frontend_head_html.length === 0 || CAPTCHA_frontend_login_html.length === 0 || CAPTCHA_JSONerr !== true || CAPTCHA_verify_func_pass_btn !== true"
                     :color="setCAPTCHA_color"
                     class="ma-2 white--text"
                     @click="setCAPTCHA"
@@ -452,6 +449,7 @@
 
 <script>
   import axios from "axios"
+  import debounce from 'lodash/debounce';
   export default {
     props: {
       source: String,
@@ -476,6 +474,9 @@
                     'Content-Type': 'application/x-www-form-urlencoded'
                 }
             }, null, 4),
+      CAPTCHA_verify_func : "function(HTTPResponse) {\n    if(HTTPResponse.code < 200 || HTTPResponse.code >= 400){\n        return \"Bed response code: \" + HTTPResponse.code;\n    }\n    else{\n        response_json = JSON.parse(HTTPResponse.body.decode(\"utf8\"))\n        if(response_json[\"success\"] === true){\n            return true;\n        }\n        return \"CAPTCHA failed: \" + JSON.stringify(response_json[\"error-codes\"]);\n    } \n}",
+      CAPTCHA_verify_func_pass : true,
+      CAPTCHA_verify_func_pass_btn : true,
       CAPTCHA_frontend_head_html : "<script src='https://www.google.com/recaptcha/api.js'> </ script>" , 
       CAPTCHA_frontend_login_html : "<div class='g-recaptcha' data-sitekey=6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI></div>",
       password_in : "",
@@ -656,10 +657,12 @@
           self.CAPTCHA_verify_api = JSON.stringify( res.data["g"]["CAPTCHA_verify_api"],null,4);
           self.CAPTCHA_frontend_head_html = res.data["g"]["CAPTCHA_frontend_head_html"];
           self.CAPTCHA_frontend_login_html = res.data["g"]["CAPTCHA_frontend_login_html"];
+          self.CAPTCHA_verify_func = res.data["g"]["CAPTCHA_verify_api_check_function"];
         }
-        
       ).catch(function(error){
         console.log(error);
+      }).finally(function(){
+        self.CAPTCHA_verify_func_change();
       })
 
       axios.get(this.api_path + "Info",{params : {session_id : this.$getCookie(self.cookie_prefix + "session_id")}}).then(
@@ -1024,7 +1027,8 @@
         "CAPTCHA_front_end_response_field":this.CAPTCHA_front_end_response_field,
         "CAPTCHA_verify_api":JSON.parse(this.CAPTCHA_verify_api),
         "CAPTCHA_frontend_head_html":this.CAPTCHA_frontend_head_html,
-        "CAPTCHA_frontend_login_html":this.CAPTCHA_frontend_login_html
+        "CAPTCHA_frontend_login_html":this.CAPTCHA_frontend_login_html,
+        "CAPTCHA_verify_api_check_function":self.CAPTCHA_verify_func
       };
       let new_config_g = JSON.parse(JSON.stringify(new_config_p));
       new_config_g["CAPTCHA_enable"] = this.CAPTCHA_enable_g;
@@ -1065,6 +1069,36 @@
         self.updatePage();
       })
     },
+    CAPTCHA_verify_func_change(){
+      this.CAPTCHA_verify_func_pass_btn="Waiting for server check...";
+      this.delay_check_verify_func();
+    },
+    delay_check_verify_func: debounce(function(){this.check_verify_func()},100),
+    check_verify_func(){
+      let self=this;
+      axios.get(this.api_path + "CAPTCHA",{params : {session_id: this.$getCookie(this.cookie_prefix + "session_id") , test_func:"p",test_func_body:this.CAPTCHA_verify_func }}).then(
+        function(){
+          self.CAPTCHA_verify_func_pass=true;
+          self.CAPTCHA_verify_func_pass_btn=true;
+        })
+      .catch(function (error){
+        if (error.response) {
+          if (error.response.data["error_description"] != undefined){
+            self.CAPTCHA_verify_func_pass=error.response.data["error"] + ": " + error.response.data["error_description"];
+          }
+          else{
+            self.CAPTCHA_verify_func_pass = error.response.data;
+          }
+        }
+        else{
+          console.log(error);
+          self.CAPTCHA_verify_func_pass = "Network Error."
+        }
+      })
+      .finally(function(){
+        
+      })
+    },
     setPassword(){
       var self = this;
       axios.put(this.api_path + "login",null,{params : {session_id : self.$getCookie(self.cookie_prefix + "session_id"),password: self.New_password , password_old : self.Old_password}}).then(
@@ -1102,5 +1136,18 @@
 <style>
 #keep .v-navigation-drawer__border {
   display: none
+}
+[code_text] {
+  font-family: Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New !important;
+  background: url("../assets/images/code_line_number.png");
+  background-attachment: local;
+  background-repeat: no-repeat;
+  padding-left: 30px !important;
+  padding-top: 11px !important;
+  border-color: #ccc;
+  white-space: nowrap;
+  overflow: auto;
+  font-size: 13px !important;
+  line-height: 16px !important;
 }
 </style>

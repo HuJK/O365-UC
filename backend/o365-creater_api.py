@@ -118,6 +118,15 @@ class CAPTCHAHandler(RequestHandlerWithCROS):
         try:
             session_id = self.get_argument('session_id', True)
             self.p.checkLoginErr(self,session_id)
+            test_func = self.get_argument('test_func',  default=False)
+            if test_func == "p":
+                test_func_body = self.get_argument('test_func_body',  default="")
+                self.write(json.dumps(await self.p.check_CAPTCHA_verify_api_check_function(test_func_body),indent=2, ensure_ascii=False))
+                return
+            elif test_func == "g":
+                test_func_body = self.get_argument('test_func_body',  default="")
+                self.write(json.dumps(await self.g.check_CAPTCHA_verify_api_check_function(test_func_body),indent=2, ensure_ascii=False))
+                return
             ret = {
                 "p":self.p.getCAPTCHAsettings(),
                 "g":self.g.getCAPTCHAsettings(),
@@ -133,6 +142,8 @@ class CAPTCHAHandler(RequestHandlerWithCROS):
         try:
             session_id = self.get_argument('session_id', True)
             new_config = json.loads(self.get_argument("new_config", True))
+            #if "CAPTCHA_verify_api_check_function" in new_config["p"]
+            #    await self.p.check_CAPTCHA_verify_api_check_function(new_config["p"]["CAPTCHA_verify_api_check_function"])
             self.p.checkLoginErr(self,session_id)
             self.p.setCAPTCHAsettings(new_config["p"])
             self.g.setCAPTCHAsettings(new_config["g"])
@@ -160,6 +171,10 @@ class setInfoHandler(RequestHandlerWithCROS):
             session_id = self.get_argument('session_id', True)
             p.checkLoginErr(self,session_id)#################Need Login
             self.write(json.dumps(protect_info(o.__dict__,["secret","client_id","access_token","refresh_token","code"]), indent=2, ensure_ascii=False))
+        except HTTPClientError as e:
+            self.clear()
+            self.set_status(e.response.code)
+            self.finish(e.response.body)
         except KeyError as e:
             return
     async def put(self, *args, **kwargs): 
