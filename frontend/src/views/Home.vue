@@ -367,6 +367,8 @@
       url_base : location.origin,
       cookie_prefix: "o365_ucg",
       CAPTCHA_response_name : "" ,
+      CAPTCHA_frontend_head_html : "",
+      CAPTCHA_frontend_login_html : "",
       invite_success : false,
       invite_loading:false,
       invite_errmsg:"",
@@ -494,8 +496,32 @@
         }
       },
       logoutGuest(){
-        this.$delCookie(this.cookie_prefix + "session_id");
-        window.location.reload();
+        var self = this;
+        axios.delete(self.api_path + "guestlogin",{params : {session_id : self.$getCookie(self.cookie_prefix + "session_id")}}).then(
+          function(res){
+            self.$setCookie(self.cookie_prefix + "session_id", res.data["session_id"]);
+            window.location.reload();
+            self.updatePage();
+          })
+        .catch(function (error){
+          if (error.response) {
+            if(error.response.status === 401){
+              self.login_errmsg = error.response.data.error_description;
+            }
+            else{
+              self.login_errmsg = "Error code:" + error.response.status;
+            }
+          }
+          else{
+            console.log(error);
+            self.login_errmsg = "Network Error."
+          }
+        })
+        .finally(function(){
+          self.updatePage();
+          //self.$delCookie(self.cookie_prefix + "session_id");
+          //window.location.reload();
+        })
       },
       check_init(){
         var self = this;
@@ -528,36 +554,33 @@
           self.server_init_pending = false;
         })
       },
+      updateCAPTCHA(){
+        var self = this;
+        // console.log("UPdateC")
+        // console.log(document.getElementsByName(self.CAPTCHA_response_name))
+        // console.log(document.getElementsByClassName('CAPTCHAfield'))
+        if (self.CAPTCHA_response_name !== "" && document.getElementsByName(self.CAPTCHA_response_name).length === 0 && document.getElementsByClassName('CAPTCHAfield').length !== 0){
+          document.getElementsByClassName('CAPTCHAfield')[0].appendChild( document.createRange().createContextualFragment( self.CAPTCHA_frontend_login_html ));
+        }
+        else{
+          console.log("Not add due to" + " 1: " + (self.CAPTCHA_response_name === "") + " 2: " + (document.getElementsByName(self.CAPTCHA_response_name).length === 0) + " 3: " + (document.getElementsByClassName('CAPTCHAfield').length !== 0))
+        }
+      },
       updatePage(){
         var self = this;
         if (self.CAPTCHA_response_name === ""){
           axios.get(this.api_path + "login",{params : {get_CAPTCHA : "g"}}).then(
             function(res){
-              document.getElementsByTagName('head')[0].appendChild( document.createRange().createContextualFragment( res.data["CAPTCHA_frontend_head_html"] ));
-              document.getElementsByClassName('CAPTCHAfield')[0].appendChild( document.createRange().createContextualFragment( res.data["CAPTCHA_frontend_login_html"] ));
-              
               self.CAPTCHA_response_name = res.data["CAPTCHA_front_end_response_field"];
+              self.CAPTCHA_frontend_head_html = res.data["CAPTCHA_frontend_head_html"];
+              self.CAPTCHA_frontend_login_html = res.data["CAPTCHA_frontend_login_html"];
+              document.getElementsByTagName('head')[0].appendChild( document.createRange().createContextualFragment( self.CAPTCHA_frontend_head_html ));
             }
             
           ).catch(function(error){
             console.log(error);
           })
         }
-        if (self.CAPTCHA_response_name !== "" && document.getElementsByName(self.CAPTCHA_response_name).length === 0){
-          axios.get(this.api_path + "login",{params : {get_CAPTCHA : "g"}}).then(
-            function(res){
-              document.getElementsByClassName('CAPTCHAfield')[0].appendChild( document.createRange().createContextualFragment( res.data["CAPTCHA_frontend_login_html"] ));
-            }
-            
-          ).catch(function(error){
-            console.log(error);
-          })
-        }
-
-
-
-
-
 
         axios.get(this.api_path + "getRegInfo",{params : {guest_session_id : this.$getCookie(self.cookie_prefix + "session_id")}}).then(
           function(res){
@@ -572,6 +595,7 @@
         ).catch(function(error){
           console.log(error);
           self.invite_success=false;
+          self.updateCAPTCHA()
         })
       },
       updatePage2(){
@@ -618,8 +642,7 @@
             }
           }
           
-        ).catch(function(error){
-          console.log(error);
+        ).catch(function(){
           self.invite_success=false;
         })
       },

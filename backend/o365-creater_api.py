@@ -27,12 +27,15 @@ g = o365_creater_auth.pwd_guest("./config/config_guest.json") #guest login
 class RequestHandlerWithCROS(tornado.web.RequestHandler):
     def __init__(self, *args, **kwargs):
         super(RequestHandlerWithCROS, self).__init__(*args, **kwargs)
-#     def set_default_headers(self):
-#         self.set_header("Access-Control-Allow-Origin", "*")
-#         self.set_header("Access-Control-Allow-Methods", "*")
-#         self.set_header("Access-Control-Allow-Headers", "*")
-#     async def options(self, *args, **kwargs): 
-#         self.write("OK")
+    def set_default_headers(self):
+        self.set_header("Access-Control-Allow-Origin", "*")
+        self.set_header("Access-Control-Allow-Methods", "*")
+        self.set_header("Access-Control-Allow-Headers", "*")
+    async def options(self, *args, **kwargs): 
+        self.set_header("Access-Control-Allow-Origin", "*")
+        self.set_header("Access-Control-Allow-Methods", "*")
+        self.set_header("Access-Control-Allow-Headers", "*")
+        self.write("OK")
 
 class loginHandler(RequestHandlerWithCROS):
     def __init__(self, *args, **kwargs):
@@ -89,7 +92,7 @@ class loginHandler(RequestHandlerWithCROS):
         try:
             session_id = self.get_argument('session_id', True)
             self.p.checkLoginErr(self,session_id)
-            del self.p.loginUser[session_id]
+            self.p.logout(session_id)
             self.write("OK")
         except HTTPClientError as e:
             print(e)
@@ -121,11 +124,28 @@ class CAPTCHAHandler(RequestHandlerWithCROS):
             test_func = self.get_argument('test_func',  default=False)
             if test_func == "p":
                 test_func_body = self.get_argument('test_func_body',  default="")
-                self.write(json.dumps(await self.p.check_CAPTCHA_verify_api_check_function(test_func_body),indent=2, ensure_ascii=False))
+                self.write(json.dumps(await self.p.CAPTCHA_verify_api_check("undefined",test_func_body,use_real=False),indent=2, ensure_ascii=False))
                 return
             elif test_func == "g":
                 test_func_body = self.get_argument('test_func_body',  default="")
-                self.write(json.dumps(await self.g.check_CAPTCHA_verify_api_check_function(test_func_body),indent=2, ensure_ascii=False))
+                self.write(json.dumps(await self.g.CAPTCHA_verify_api_check("undefined",test_func_body,use_real=False),indent=2, ensure_ascii=False))
+                return
+            test_req_params = self.get_argument('test_req_params',  default=False)
+            if test_req_params == "p":
+                test_req_body = json.loads(self.get_argument('test_req_body',  default=""))
+                test_ret = await self.p.CAPTCHA_check("undefined",test_req_body)
+                test_ret_d = test_ret.__dict__
+                test_ret_d["body"] = test_ret.body
+                del test_ret_d["_body"]
+                self.write(json.dumps(test_ret_d,indent=2, ensure_ascii=False,default=lambda x:str(x)))
+                return
+            elif test_req_params == "g":
+                test_req_body = json.loads(self.get_argument('test_req_body',  default=""))
+                test_ret = await self.g.CAPTCHA_check("undefined",test_req_body)
+                test_ret_d = test_ret.__dict__
+                test_ret_d["body"] = test_ret.body
+                del test_ret_d["_body"]
+                self.write(json.dumps(test_ret_d,indent=2, ensure_ascii=False,default=lambda x:str(x)))
                 return
             ret = {
                 "p":self.p.getCAPTCHAsettings(),
@@ -161,7 +181,7 @@ def protect_info(info_in,protected_keys):
     for p in protected_keys:
         if p in info_out and info_out[p] != "":
             try:
-                info_out[p] = info_out[p][:5] + "...(not showing)..." + info_out[p][-5:]
+                info_out[p] = info_out[p][:5] + "...(hidden)..." + info_out[p][-5:]
             except:
                 info_out[p] = info_out[p]
     return info_out
@@ -385,6 +405,7 @@ class createUser(RequestHandlerWithCROS):
             g.setProperty(self,guest_session_id,"userPrincipalName",userPrincipalName)
             g.setProperty(self,guest_session_id,"displayName",displayName)
             g.setProperty(self,guest_session_id,"regResult",ret)
+            g.setProperty(self,guest_session_id,"redeemed",True)
             self.write(json.dumps(ret, indent=2, ensure_ascii=False))
         except HTTPClientError as e:
             self.clear()

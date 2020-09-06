@@ -317,12 +317,12 @@
                 <v-text-field label="Frontend CAPTCHA form field id"  v-model="CAPTCHA_front_end_response_field" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
                 <v-text-field label="Frontend HTML injection (HEAD)"  v-model="CAPTCHA_frontend_head_html" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
                 <v-text-field label="Frontend HTML injection (FORM)"  v-model="CAPTCHA_frontend_login_html" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
-                <v-textarea auto-grow label="Backend verify api request paramaters" code_text spellcheck="false" v-model="CAPTCHA_verify_api" :rules="[CAPTCHA_JSONerr]"></v-textarea>
+                <v-textarea auto-grow label="Backend verify api request paramaters" code_text spellcheck="false" v-model="CAPTCHA_verify_api"  @input="CAPTCHA_verify_api_change" :rules="[CAPTCHA_verify_api_pass]"></v-textarea>
                 <v-textarea auto-grow label="Backend verify api response check function (ECMAScript 5.1)" code_text spellcheck="false" v-model="CAPTCHA_verify_func" @input="CAPTCHA_verify_func_change" :rules="[CAPTCHA_verify_func_pass] "></v-textarea>
                 <v-row justify="end">
                   <v-btn
                     :loading="setCAPTCHA_loading"
-                    :disabled="setCAPTCHA_loading || CAPTCHA_front_end_response_field.length === 0 || CAPTCHA_frontend_head_html.length === 0 || CAPTCHA_frontend_login_html.length === 0 || CAPTCHA_JSONerr !== true || CAPTCHA_verify_func_pass_btn !== true"
+                    :disabled="setCAPTCHA_loading || CAPTCHA_front_end_response_field.length === 0 || CAPTCHA_frontend_head_html.length === 0 || CAPTCHA_frontend_login_html.length === 0 || CAPTCHA_verify_api_pass_btn !== true || CAPTCHA_verify_func_pass_btn !== true"
                     :color="setCAPTCHA_color"
                     class="ma-2 white--text"
                     @click="setCAPTCHA"
@@ -474,6 +474,8 @@
                     'Content-Type': 'application/x-www-form-urlencoded'
                 }
             }, null, 4),
+      CAPTCHA_verify_api_pass : true,
+      CAPTCHA_verify_api_pass_btn : true,
       CAPTCHA_verify_func : "function(HTTPResponse) {\n    if(HTTPResponse.code < 200 || HTTPResponse.code >= 400){\n        return \"Bed response code: \" + HTTPResponse.code;\n    }\n    else{\n        response_json = JSON.parse(HTTPResponse.body.decode(\"utf8\"))\n        if(response_json[\"success\"] === true){\n            return true;\n        }\n        return \"CAPTCHA failed: \" + JSON.stringify(response_json[\"error-codes\"]);\n    } \n}",
       CAPTCHA_verify_func_pass : true,
       CAPTCHA_verify_func_pass_btn : true,
@@ -567,15 +569,6 @@
       setDomainsAndLicences_disable(){return this.setDomainsAndLicences_loading || (this.selected_domains.length === 0) || (this.selected_licences.length === 0) },
       maxAllowedLicenseList() {
           return [...Array(this.selected_licences.length).keys()].map( function (x){return x+1});
-      },
-      CAPTCHA_JSONerr(){
-        try{
-          JSON.parse(this.CAPTCHA_verify_api);
-          return true;
-        }
-        catch(err){
-          return err.message;
-        }
       }
     },
     mounted: function(){
@@ -620,8 +613,31 @@
         }
       },
     logoutAdmin(){
-      this.$delCookie(this.cookie_prefix + "session_id");
+      var self = this;
+      axios.delete(self.api_path + "login",{params : {session_id : self.$getCookie(self.cookie_prefix + "session_id")}}).then(
+       function(res){
+         self.$setCookie(self.cookie_prefix + "session_id", res.data["session_id"]);
+         self.updatePage();
+       })
+     .catch(function (error){
+       if (error.response) {
+         if(error.response.status === 401){
+           self.login_errmsg = error.response.data.error_description;
+         }
+         else{
+           self.login_errmsg = "Error code:" + error.response.status;
+         }
+       }
+       else{
+         console.log(error);
+         self.login_errmsg = "Network Error."
+       }
+     })
+     .finally(function(){
+      self.$delCookie(self.cookie_prefix + "session_id");
       window.location.reload();
+     })
+
     },
     updatePage(){
       var self = this;
@@ -1067,6 +1083,42 @@
       .finally(function(){
         self.setCAPTCHA_loading=false;
         self.updatePage();
+      })
+    },
+    CAPTCHA_verify_api_change(){
+      this.CAPTCHA_verify_api_pass_btn = false;
+      try{
+        JSON.parse(this.CAPTCHA_verify_api);
+        this.delay_CAPTCHA_verify_api_change()
+      }
+      catch(err){
+        this.CAPTCHA_verify_api_pass = err.toString();
+      }
+    },
+    delay_CAPTCHA_verify_api_change: debounce(function(){this.CAPTCHA_verify_api_change_server_check()},500),
+    CAPTCHA_verify_api_change_server_check(){
+      let self=this;
+      axios.get(this.api_path + "CAPTCHA",{params : {session_id: this.$getCookie(this.cookie_prefix + "session_id") , test_req_params:"p", test_req_body:self.CAPTCHA_verify_api }}).then(
+        function(){
+          self.CAPTCHA_verify_api_pass=true;
+          self.CAPTCHA_verify_api_pass_btn=true;
+        })
+      .catch(function (error){
+        if (error.response) {
+          if (error.response.data["error_description"] != undefined){
+            self.CAPTCHA_verify_api_pass=error.response.data["error"] + ": " + error.response.data["error_description"];
+          }
+          else{
+            self.CAPTCHA_verify_api_pass = error.response.data;
+          }
+        }
+        else{
+          console.log(error);
+          self.CAPTCHA_verify_api_pass = "Network Error."
+        }
+      })
+      .finally(function(){
+        
       })
     },
     CAPTCHA_verify_func_change(){

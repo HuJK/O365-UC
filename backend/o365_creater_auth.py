@@ -53,8 +53,7 @@ function(HTTPResponse) {
 """,
             "CAPTCHA_frontend_head_html" : "<script src='https://www.google.com/recaptcha/api.js'></script>",
             "CAPTCHA_frontend_login_html" : "<div class='g-recaptcha' data-sitekey=6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI></div>",
-            "_CAPTCHA_api_response_example" : None,
-            "_CAPTCHA_api_response_example_timeout" : 0
+            "_CAPTCHA_api_response_example" : None
         }
         
         self.config_path = config_path
@@ -82,7 +81,32 @@ function(HTTPResponse) {
         with open(self.config_path,"w") as config:
             config.write(json.dumps(self.__dict__,ensure_ascii=False,indent = 2,default=lambda o:None))
         self._CAPTCHA_api_response_example_timeout=0
-    async def check_CAPTCHA_verify_api_check_function(self,jsfuncstr):
+    async def CAPTCHA_check(self,CAPTCHA,request_params):
+        try:
+            client = tornado.httpclient.AsyncHTTPClient()
+            request = { k:v for k,v in request_params.items() if (v != None) }
+            request = copy.deepcopy(request)
+            if "url_params" in request:
+                request["url_params"] = { k:v.replace("__front_end_response__",CAPTCHA) for k,v in request["url_params"].items() }
+                request["url"] = request["url"] + "?" + urlencode(request["url_params"])
+                del request["url_params"]
+            if "body_params" in request:
+                request["body_params"] = { k:v.replace("__front_end_response__",CAPTCHA) for k,v in request["body_params"].items() }
+                request["body"] = urlencode(request["body_params"])
+                del request["body_params"]
+            url = request["url"]
+            del request["url"]
+            response = await client.fetch(url,**request)
+            self._CAPTCHA_api_response_example = response
+            return response
+        except Exception as e:
+            errordict = {
+                          "error": "CAPTCHA api fetch error",
+                          "error_description": str(e),
+                          "error_uri": "See the full API docs at https://www.tornadoweb.org/en/stable/httpclient.html#tornado.httpclient.AsyncHTTPClient.fetch"
+                        }
+            raise self.generateError(400,"JsException",json.dumps(errordict, indent=2, ensure_ascii=False,default=lambda o:None))
+    async def CAPTCHA_verify_api_check(self,CAPTCHA,jsfuncstr,use_real=True):
         try:
             check_func = js2py.eval_js(jsfuncstr)
         except Exception as e:
@@ -92,41 +116,21 @@ function(HTTPResponse) {
                           "error_uri": "See the full API docs at https://github.com/PiotrDabkowski/Js2Py"
                         }
             raise self.generateError(400,"JsException",json.dumps(errordict, indent=2, ensure_ascii=False,default=lambda o:None))
-        try:
-            if self._CAPTCHA_api_response_example_timeout < time.time() or self._CAPTCHA_api_response_example == None:
-                client = tornado.httpclient.AsyncHTTPClient()
-                CAPTCHA = "undefined"
-                request = { k:v for k,v in self.CAPTCHA_verify_api.items() if (v != None) }
-                request = copy.deepcopy(request)
-                if "url_params" in request:
-                    request["url_params"] = { k:v.replace("__front_end_response__",CAPTCHA) for k,v in request["url_params"].items() }
-                    request["url"] = request["url"] + "?" + urlencode(request["url_params"])
-                    del request["url_params"]
-                if "body_params" in request:
-                    request["body_params"] = { k:v.replace("__front_end_response__",CAPTCHA) for k,v in request["body_params"].items() }
-                    request["body"] = urlencode(request["body_params"])
-                    del request["body_params"]
-                url = request["url"]
-                del request["url"]
-                response = await client.fetch(url,**request)
-                self._CAPTCHA_api_response_example_timeout = time.time() + 86400
-                self._CAPTCHA_api_response_example = response
-        except Exception as e:
-            errordict = {
-                          "error": "CAPTCHA api error",
-                          "error_description": str(e),
-                          "error_uri": "See the full API docs at https://github.com/HuJK/O365-UC"
-                        }
-            raise self.generateError(400,"JsException",json.dumps(errordict, indent=2, ensure_ascii=False,default=lambda o:None))
+        timeout = 0.1
+        if self._CAPTCHA_api_response_example == None or use_real:
+            timeout = 0.2
+            response = await self.CAPTCHA_check(CAPTCHA,self.CAPTCHA_verify_api)
+        else:
+            response = self._CAPTCHA_api_response_example
         try:
             func_ret = multiprocessing.Manager().dict()
             func_ret.update({"val":None})
-            prcs = multiprocessing.Process(target=lambda p,r:print("P:",p,"C:",check_func(p),"R:",r.update({"val":check_func(p)}),"R2:",r), args=[self._CAPTCHA_api_response_example,func_ret])
+            prcs = multiprocessing.Process(target=lambda p,r:r.update({"val":check_func(p)}), args=[response,func_ret])
             prcs.start()
-            prcs.join(timeout=0.1)
+            prcs.join(timeout=timeout)
             if prcs.is_alive():
                 prcs.terminate()
-                raise TimeoutError("TimeoutError: Maximum execution time exceeded in your code.")
+                raise TimeoutError("TimeoutError: Maximum execution time exceeded in your response_check_function.")
         except Exception as e:
             errordict = {
                           "error": "JsException",
@@ -153,11 +157,13 @@ function(HTTPResponse) {
             self.loginUser[keys]["expire"] = 0
         with open(self.config_path,"w") as config:
             config.write(json.dumps(self.__dict__,ensure_ascii=False,indent = 2,default=lambda o:None))
+    def logout(self,sid):
+        del self.loginUser[sid]
     def checkLogin(self,sid):
         if sid not in self.loginUser:
             return False
         if self.loginUser[sid]["expire"] < time.time():
-            del self.loginUser[sid]
+            self.logout(sid)
             return False
         self.loginUser[sid]["expire"] = self.expire_in + time.time()
         with open(self.config_path,"w") as config:
@@ -177,50 +183,9 @@ function(HTTPResponse) {
         self.loginUser[sid][key] = val
         with open(self.config_path,"w") as config:
             config.write(json.dumps(self.__dict__,ensure_ascii=False,indent = 2,default=lambda o:None))
-        
     async def login(self,reqH,password,CAPTCHA,checkOnly=False):
         if self.CAPTCHA_enable == True and checkOnly == False:
-            client = tornado.httpclient.AsyncHTTPClient()
-            request = { k:v for k,v in self.CAPTCHA_verify_api.items() if (v != None) }
-            request = copy.deepcopy(request)
-            if "url_params" in request:
-                request["url_params"] = { k:v.replace("__front_end_response__",CAPTCHA) for k,v in request["url_params"].items() }
-                request["url"] = request["url"] + "?" + urlencode(request["url_params"])
-                del request["url_params"]
-            if "body_params" in request:
-                request["body_params"] = { k:v.replace("__front_end_response__",CAPTCHA) for k,v in request["body_params"].items() }
-                request["body"] = urlencode(request["body_params"])
-                del request["body_params"]
-            url = request["url"]
-            del request["url"]
-            response = await client.fetch(url,**request)
-            
-            check_func = js2py.eval_js(self.CAPTCHA_verify_api_check_function)
-            try:
-                func_ret = multiprocessing.Manager().dict()
-                func_ret.update({"val":None})
-                prcs = multiprocessing.Process(target=lambda p,r:print("P:",p,"C:",check_func(p),"R:",r.update({"val":check_func(p)}),"R2:",r), args=[response,func_ret])
-                prcs.start()
-                prcs.join(timeout=0.1)
-                if prcs.is_alive():
-                    prcs.terminate()
-                    raise TimeoutError("TimeoutError: Maximum execution time exceeded in response_check_function.")
-            except Exception as e:
-                errordict = {
-                              "error": "JsException",
-                              "error_description": str(e),
-                              "error_uri": "See the full API docs at https://github.com/PiotrDabkowski/Js2Py"
-                            }
-                raise self.generateError(400,"JsException",json.dumps(errordict, indent=2, ensure_ascii=False,default=lambda o:None))
-            if func_ret["val"] == True or type(func_ret["val"]) == str:
-                check_func_ret = func_ret["val"]
-            else:
-                errordict = {
-                          "error": "Incompatible function",
-                          "error_description": "Your function must return true(success) or string(error_msg).",
-                          "error_uri": "See the full API docs at https://github.com/HuJK/O365-UC"
-                        }
-                raise self.generateError(400,"Incompatible function",json.dumps(errordict, indent=2, ensure_ascii=False,default=lambda o:None))
+            check_func_ret = await self.CAPTCHA_verify_api_check(CAPTCHA,self.CAPTCHA_verify_api_check_function,use_real=True)
             if check_func_ret==True:
                 pass
             else:
@@ -232,9 +197,13 @@ function(HTTPResponse) {
                 raise self.generateError(401,"CAPTCHA failed",json.dumps(errordict, indent=2, ensure_ascii=False,default=lambda o:None))
         if self.check(password):
             sid = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(32))
-            self.loginUser = { k:v for k,v in self.loginUser.items() if (v["expire"] > time.time()) }
             if checkOnly == False:
+                expired_loginUser = { k:v for k,v in self.loginUser.items() if (v["expire"] < time.time()) }
+                list(map(self.logout,expired_loginUser.keys())) # logout all expired user
                 self.loginUser[sid] = {"expire":time.time() + 3600}
+                if self.modName == "invite Code":
+                    self.loginUser[sid]["invite_code"] = password
+                    self.loginUser[sid]["redeemed"] = False
                 with open(self.config_path,"w") as config:
                     config.write(json.dumps(self.__dict__,ensure_ascii=False,indent = 2,default=lambda o:None))
                 return {"session_id":sid,"expore_in":self.expire_in - 1}
@@ -272,3 +241,16 @@ class pwd_guest(pwd):
                     i_fileHendler.write(str(use_left - 1))
                 return True
         return False
+    def logout(self,sid):
+        if "redeemed" in self.loginUser[sid] and self.loginUser[sid]["redeemed"] == False:
+            i_path = os.path.join(self.invite_code_path,self.loginUser[sid]["invite_code"])
+            if os.path.isfile(i_path):
+                with open(i_path) as i_fileHendler:
+                    use_left = int(i_fileHendler.read())
+                if use_left >= 0:
+                    with open(i_path,"w") as i_fileHendler:
+                        i_fileHendler.write(str(use_left + 1))
+            else:
+                with open(i_path,"w") as i_fileHendler:
+                    i_fileHendler.write(str(1))
+        del self.loginUser[sid]
