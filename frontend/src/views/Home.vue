@@ -575,6 +575,7 @@
               self.CAPTCHA_frontend_head_html = res.data["CAPTCHA_frontend_head_html"];
               self.CAPTCHA_frontend_login_html = res.data["CAPTCHA_frontend_login_html"];
               document.getElementsByTagName('head')[0].appendChild( document.createRange().createContextualFragment( self.CAPTCHA_frontend_head_html ));
+              document.getElementsByClassName('CAPTCHAfield')[0].appendChild( document.createRange().createContextualFragment( self.CAPTCHA_frontend_login_html ));
             }
             
           ).catch(function(error){
