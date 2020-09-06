@@ -136,7 +136,6 @@ class CAPTCHAHandler(RequestHandlerWithCROS):
                 test_ret = await self.p.CAPTCHA_check("undefined",test_req_body)
                 test_ret_d = test_ret.__dict__
                 test_ret_d["body"] = test_ret.body
-                del test_ret_d["_body"]
                 self.write(json.dumps(test_ret_d,indent=2, ensure_ascii=False,default=lambda x:str(x)))
                 return
             elif test_req_params == "g":
@@ -144,7 +143,6 @@ class CAPTCHAHandler(RequestHandlerWithCROS):
                 test_ret = await self.g.CAPTCHA_check("undefined",test_req_body)
                 test_ret_d = test_ret.__dict__
                 test_ret_d["body"] = test_ret.body
-                del test_ret_d["_body"]
                 self.write(json.dumps(test_ret_d,indent=2, ensure_ascii=False,default=lambda x:str(x)))
                 return
             ret = {

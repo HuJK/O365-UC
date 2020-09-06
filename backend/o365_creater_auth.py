@@ -106,6 +106,11 @@ function(HTTPResponse) {
                           "error_uri": "See the full API docs at https://www.tornadoweb.org/en/stable/httpclient.html#tornado.httpclient.AsyncHTTPClient.fetch"
                         }
             raise self.generateError(400,"JsException",json.dumps(errordict, indent=2, ensure_ascii=False,default=lambda o:None))
+    def check_func_wrapper(self,func,parm,retv):
+        try:
+            retv["val"] = func(parm)
+        except Exception as e:
+            retv["err"] = str(e)
     async def CAPTCHA_verify_api_check(self,CAPTCHA,jsfuncstr,use_real=True):
         try:
             check_func = js2py.eval_js(jsfuncstr)
@@ -124,8 +129,8 @@ function(HTTPResponse) {
             response = self._CAPTCHA_api_response_example
         try:
             func_ret = multiprocessing.Manager().dict()
-            func_ret.update({"val":None})
-            prcs = multiprocessing.Process(target=lambda p,r:r.update({"val":check_func(p)}), args=[response,func_ret])
+            func_ret.update({"val":None,"err":None})
+            prcs = multiprocessing.Process(target=self.check_func_wrapper(check_func,response,func_ret), args=[response,func_ret])
             prcs.start()
             prcs.join(timeout=timeout)
             if prcs.is_alive():
@@ -138,6 +143,13 @@ function(HTTPResponse) {
                           "error_uri": "See the full API docs at https://github.com/PiotrDabkowski/Js2Py"
                         }
             raise self.generateError(400,"JsException",json.dumps(errordict, indent=2, ensure_ascii=False,default=lambda o:None))
+        if func_ret["err"] != None:
+            errordict = {
+                      "error": "JsRuntimeError",
+                      "error_description": func_ret["err"],
+                      "error_uri": "See the full API docs at https://github.com/PiotrDabkowski/Js2Py"
+                    }
+            raise self.generateError(400,"JsRuntimeError",json.dumps(errordict, indent=2, ensure_ascii=False,default=lambda o:None))
         if func_ret["val"] == True or type(func_ret["val"]) == str:
             return func_ret["val"]
         else:
