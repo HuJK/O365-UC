@@ -555,16 +555,16 @@
         })
       },
       updateCAPTCHA(){
-        var self = this;
-        // console.log("UPdateC")
-        // console.log(document.getElementsByName(self.CAPTCHA_response_name))
-        // console.log(document.getElementsByClassName('CAPTCHAfield'))
-        if (self.CAPTCHA_response_name !== "" && document.getElementsByName(self.CAPTCHA_response_name).length === 0 && document.getElementsByClassName('CAPTCHAfield').length !== 0){
-          document.getElementsByClassName('CAPTCHAfield')[0].appendChild( document.createRange().createContextualFragment( self.CAPTCHA_frontend_login_html ));
-        }
-        else{
-          console.log("Not add due to" + " 1: " + (self.CAPTCHA_response_name === "") + " 2: " + (document.getElementsByName(self.CAPTCHA_response_name).length === 0) + " 3: " + (document.getElementsByClassName('CAPTCHAfield').length !== 0))
-        }
+        // var self = this;
+        // // console.log("UPdateC")
+        // // console.log(document.getElementsByName(self.CAPTCHA_response_name))
+        // // console.log(document.getElementsByClassName('CAPTCHAfield'))
+        // if (self.CAPTCHA_response_name !== "" && document.getElementsByName(self.CAPTCHA_response_name).length === 0 && document.getElementsByClassName('CAPTCHAfield').length !== 0){
+        //   document.getElementsByClassName('CAPTCHAfield')[0].appendChild( document.createRange().createContextualFragment( self.CAPTCHA_frontend_login_html ));
+        // }
+        // else{
+        //   console.log("Not add due to" + " 1: " + (self.CAPTCHA_response_name === "") + " 2: " + (document.getElementsByName(self.CAPTCHA_response_name).length === 0) + " 3: " + (document.getElementsByClassName('CAPTCHAfield').length !== 0))
+        // }
       },
       updatePage(){
         var self = this;
