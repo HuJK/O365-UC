@@ -69,15 +69,17 @@ Please return True or False
         return False
 ```
 
-The following code will execute when user logout or 
+The following function is check user redeemed or not. If user logout before they redeem, it will add ```use_left``` back. 
+
+And it will be called when the user logout or other users login for all expired user.
 
 ```sid``` is the sesstion id. When user check pass, the system will generate one.
 
+```self.loginUser``` is a dictionary, stored all login users. remember to ```del self.loginUser[sid]``` in the function.
+
+```self.loginUser[sid]["invite_code"]``` is the invite_code that the user use.
+
 ```self.loginUser[sid]["redeemed"]``` is whether the user created an account or not. 
-
-The following function is check user redeemed or not. If user logout before they redeem, it will add use_left back.
-
-```logout``` will be called when the user logout or other users login for all expired session.
 
 ```python
     def logout(self,sid):
