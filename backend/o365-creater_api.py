@@ -29,14 +29,14 @@ class RequestHandlerWithCROS(tornado.web.RequestHandler):
         super(RequestHandlerWithCROS, self).__init__(*args, **kwargs)
     def set_default_headers(self):
         self.set_header("Content-Type", "application/json; charset=utf-8")
-        self.set_header("Access-Control-Allow-Origin", "*")
-        self.set_header("Access-Control-Allow-Methods", "*")
-        self.set_header("Access-Control-Allow-Headers", "*")
-    async def options(self, *args, **kwargs): 
-        self.set_header("Access-Control-Allow-Origin", "*")
-        self.set_header("Access-Control-Allow-Methods", "*")
-        self.set_header("Access-Control-Allow-Headers", "*")
-        self.write("OK")
+#         self.set_header("Access-Control-Allow-Origin", "*")
+#         self.set_header("Access-Control-Allow-Methods", "*")
+#         self.set_header("Access-Control-Allow-Headers", "*")
+#     async def options(self, *args, **kwargs): 
+#         self.set_header("Access-Control-Allow-Origin", "*")
+#         self.set_header("Access-Control-Allow-Methods", "*")
+#         self.set_header("Access-Control-Allow-Headers", "*")
+#         self.write("OK")
 
 class loginHandler(RequestHandlerWithCROS):
     def __init__(self, *args, **kwargs):
