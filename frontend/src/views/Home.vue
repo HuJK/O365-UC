@@ -16,7 +16,7 @@
             width="40"
           />
         </div>
-        <span class="title ml-3 mr-5">Office 365 Account Registration Portal</span>
+        <span class="title ml-3 mr-5">{{appName}}</span>
         <v-spacer></v-spacer>
         <v-btn icon color="grey lighten-2" to="/admin">
           <v-icon>mdi-cog</v-icon>
@@ -381,6 +381,7 @@
       agreement: false,
       dialog: false,
       form: false,
+      appName : "Office 365 Account Registration Portal",
       
       username: "",
       username_checked :false,
@@ -528,6 +529,7 @@
         axios.get(this.api_path + "testInit").then(
           function(res){
             document.title = res.data["appName"];
+            self.appName = res.data["appName"];
             if(res.data["success"] == true){
               self.server_init_status = true;
               self.updatePage();
@@ -543,6 +545,7 @@
           console.log(error);
           if (error.response.data["appName"] !== undefined) {
             document.title = error.response.data["appName"];
+            self.appName = error.response.data["appName"];
             self.server_init_status = false;
             self.server_init_status_title=error.response.data["error"];
             self.server_init_status_text = error.response.data["error_description"].replace(/\n/g, "<br/>");

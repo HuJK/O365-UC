@@ -6,7 +6,7 @@
       color="amber"
     >
       <v-app-bar-nav-icon @click="drawer = !drawer" />
-      <span class="title ml-3 mr-5">Office 365 Account Registration Portal&nbsp;<span class="font-weight-light">Admin Panel</span></span>
+      <span class="title ml-3 mr-5">{{appName}}&nbsp;<span class="font-weight-light">Admin Panel</span></span>
       <v-spacer />
 
       <v-btn icon color="grey lighten-2" to="/">
@@ -516,7 +516,7 @@
       setPassword_color:"blue",
       setPassword_icon:"mdi-cloud-upload",
       
-      appName : "",
+      appName : "Office 365 Account Registration Portal",
       redirect_uri : "",
       maxAllowedLicense : 1,
       secret : "",
