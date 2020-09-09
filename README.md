@@ -40,9 +40,9 @@ Negtive number means this invite_code can redeem infinity times.
 
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/15.PNG)
 
-If you want to use your own invite code check process, like connect to mysql instead of txt based 
+If you want to use mysql instead of txt rw, or your own invite code check progress, please edit line 234 to line 268 at the ```backend/o365_creater_auth.py``` file:
 
-Just edit line 253 to line 274 at the ```backend/o365_creater_auth.py``` file:
+Please return True or False
 
 ```python
     def check(self,password):
@@ -67,9 +67,36 @@ Just edit line 253 to line 274 at the ```backend/o365_creater_auth.py``` file:
                     i_fileHendler.write(str(use_left - 1))
                 return True
         return False
-  ```
+```
 
-Please return True or False.
+The following function is check user redeemed or not. If user logout before they redeem, it will add ```use_left``` back. 
+
+And it will be called when the user logout or other users login for all expired user.
+
+```sid``` is the sesstion id. When user check pass, the system will generate one.
+
+```self.loginUser``` is a dictionary, stored all login users. remember to ```del self.loginUser[sid]``` in the function.
+
+```self.loginUser[sid]["invite_code"]``` is the invite_code that the user use.
+
+```self.loginUser[sid]["redeemed"]``` is whether the user created an account or not. 
+
+```python
+    def logout(self,sid):
+        if "redeemed" in self.loginUser[sid] and self.loginUser[sid]["redeemed"] == False:
+            i_path = os.path.join(self.invite_code_path,self.loginUser[sid]["invite_code"])
+            if os.path.isfile(i_path):
+                with open(i_path) as i_fileHendler:
+                    use_left = int(i_fileHendler.read())
+                if use_left >= 0:
+                    with open(i_path,"w") as i_fileHendler:
+                        i_fileHendler.write(str(use_left + 1))
+            else:
+                with open(i_path,"w") as i_fileHendler:
+                    i_fileHendler.write(str(1))
+        del self.loginUser[sid]
+```
+
 
 
 ## Initial Setup:
@@ -87,11 +114,11 @@ Now, you can configure registration settings or CAPTCHA settings
 
 #### CAPTCHA:
 
-##### It should be able to work at most of CAPTCHA services. 
+It should be able to work at most of CAPTCHA services. 
 
-##### Like google reCAPTCHA/hCAPTCHA/luosimao/腾讯云验证码. 
+Like google reCAPTCHA/hCAPTCHA/luosimao/腾讯云验证码. 
 
-##### I only tested google reCAPTCHA v2 and hCAPTCHA.
+I only tested google reCAPTCHA v2 and hCAPTCHA.
 
 ###### google reCAPTCHA v2:
 
