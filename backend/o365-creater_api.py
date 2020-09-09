@@ -249,8 +249,8 @@ class setCode(RequestHandlerWithCROS):
             error_description = self.get_argument('error_description', None)
             session_state = self.get_argument('session_state', "")
             state = self.get_argument('state', "")
-            self.set_header("Content-Type", "text/html; charset=utf-8")
             o.setCode(code,session_state,state,error,error_description)
+            self.set_header("Content-Type", "text/html; charset=utf-8")
             self.write('<p style="text-align:center">Finished.<br/>This window will close automatically within <span id="counter">3</span> second(s).</p><script type="text/javascript">function countdown() {var i = document.getElementById("counter"); i.innerHTML = parseInt(i.innerHTML)-1;if (parseInt(i.innerHTML)<=0) { window.close();}}setInterval(function(){ countdown(); },1000);</script>')
         except HTTPClientError as e:
             self.clear()
