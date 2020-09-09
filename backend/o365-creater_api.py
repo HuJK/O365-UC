@@ -28,6 +28,7 @@ class RequestHandlerWithCROS(tornado.web.RequestHandler):
     def __init__(self, *args, **kwargs):
         super(RequestHandlerWithCROS, self).__init__(*args, **kwargs)
     def set_default_headers(self):
+        self.set_header("Content-Type", "application/json; charset=utf-8")
         self.set_header("Access-Control-Allow-Origin", "*")
         self.set_header("Access-Control-Allow-Methods", "*")
         self.set_header("Access-Control-Allow-Headers", "*")
@@ -53,45 +54,42 @@ class loginHandler(RequestHandlerWithCROS):
                 return
             password = self.get_argument('password', True)
             session_id = self.get_argument('session_id', True)
-            self.p.checkLoginErr(self,session_id)
+            self.p.checkLoginErr(session_id)
             self.write(json.dumps(self.p.loginUser[session_id], indent=2, ensure_ascii=False))
         except HTTPClientError as e:
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
-        except KeyError as e:
-            return
+
     async def put(self, *args, **kwargs): 
         try:
             password = self.get_argument('password', "")
             password_old = self.get_argument('password_old', "")
             session_id = self.get_argument('session_id', True)
-            self.p.checkLoginErr(self,session_id)
-            await self.p.login(self,password_old,None,checkOnly=True)
+            self.p.checkLoginErr(session_id)
+            await self.p.login(password_old,None,checkOnly=True)
             self.p.setPassword(password)
             self.write("OK")
         except HTTPClientError as e:
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
-        except KeyError as e:
-            return
+
     async def post(self, *args, **kwargs): 
         try:
             password = self.get_argument('password', True)
             CAPTCHA = self.get_argument("CAPTCHA", default="")
-            ret = await self.p.login(self,password,CAPTCHA)
+            ret = await self.p.login(password,CAPTCHA)
             self.write(json.dumps(ret, indent=2, ensure_ascii=False))
         except HTTPClientError as e:
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
-        except KeyError as e:
-            return
+
     async def delete(self, *args, **kwargs): 
         try:
             session_id = self.get_argument('session_id', True)
-            self.p.checkLoginErr(self,session_id)
+            self.p.checkLoginErr(session_id)
             self.p.logout(session_id)
             self.write("OK")
         except HTTPClientError as e:
@@ -99,9 +97,7 @@ class loginHandler(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
-        except KeyError as e:
-            print(e)
-            return
+
 class guestloginHandler(loginHandler):
     def set_default_headers(self):
         self.set_header("Access-Control-Allow-Origin", "*")
@@ -120,7 +116,7 @@ class CAPTCHAHandler(RequestHandlerWithCROS):
     async def get(self, *args, **kwargs): 
         try:
             session_id = self.get_argument('session_id', True)
-            self.p.checkLoginErr(self,session_id)
+            self.p.checkLoginErr(session_id)
             test_func = self.get_argument('test_func',  default=False)
             if test_func == "p":
                 test_func_body = self.get_argument('test_func_body',  default="")
@@ -154,24 +150,22 @@ class CAPTCHAHandler(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
-        except KeyError as e:
-            return
+
     async def put(self, *args, **kwargs): 
         try:
             session_id = self.get_argument('session_id', True)
-            new_config = json.loads(self.get_argument("new_config", True))
+            new_config =  json.loads(self.request.body)["new_config"]
             #if "CAPTCHA_verify_api_check_function" in new_config["p"]
             #    await self.p.check_CAPTCHA_verify_api_check_function(new_config["p"]["CAPTCHA_verify_api_check_function"])
-            self.p.checkLoginErr(self,session_id)
+            self.p.checkLoginErr(session_id)
             self.p.setCAPTCHAsettings(new_config["p"])
             self.g.setCAPTCHAsettings(new_config["g"])
-            self.write("OK")
+            self.write(json.dumps({"success":True},indent=2, ensure_ascii=False,default=lambda x:str(x)))
         except HTTPClientError as e:
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
-        except KeyError as e:
-            return
+
     
         
 def protect_info(info_in,protected_keys):
@@ -187,18 +181,17 @@ class setInfoHandler(RequestHandlerWithCROS):
     async def get(self, *args, **kwargs): 
         try:
             session_id = self.get_argument('session_id', True)
-            p.checkLoginErr(self,session_id)#################Need Login
+            p.checkLoginErr(session_id)#################Need Login
             self.write(json.dumps(protect_info(o.__dict__,["secret","client_id","access_token","refresh_token","code"]), indent=2, ensure_ascii=False))
         except HTTPClientError as e:
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
-        except KeyError as e:
-            return
+
     async def put(self, *args, **kwargs): 
         try:
             session_id = self.get_argument('session_id', True)
-            p.checkLoginErr(self,session_id)#################Need Login
+            p.checkLoginErr(session_id)#################Need Login
             newInfo = self.get_argument('newInfo', True)
             newInfo = json.loads(newInfo)
             o.setInfo(newInfo)
@@ -207,29 +200,26 @@ class setInfoHandler(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
-        except KeyError as e:
-            print(e)
-            return
+
 
 class getSecretIdUrl(RequestHandlerWithCROS):
     async def get(self, *args, **kwargs): 
         try:
             session_id = self.get_argument('session_id', True)
-            p.checkLoginErr(self,session_id)#################Need Login
+            p.checkLoginErr(session_id)#################Need Login
             ret = o.getSecretIdUrl()
             self.write(ret)
         except HTTPClientError as e:
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
-        except KeyError as e:
-            return
+
         
 class setSecretHandler(RequestHandlerWithCROS):
     async def put(self, *args, **kwargs): 
         try:
             session_id = self.get_argument('session_id', True)
-            p.checkLoginErr(self,session_id)#################Need Login
+            p.checkLoginErr(session_id)#################Need Login
             secret = self.get_argument('secret', True)
             client_id = self.get_argument('client_id', True)
             o.setSecret(secret,client_id)
@@ -238,21 +228,19 @@ class setSecretHandler(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
-        except KeyError as e:
-            return
+
 class getCodeURL(RequestHandlerWithCROS):
     async def get(self, *args, **kwargs): 
         try:
             session_id = self.get_argument('session_id', True)
-            p.checkLoginErr(self,session_id)#################Need Login
+            p.checkLoginErr(session_id)#################Need Login
             ret = o.getCodeURL()
             self.write(ret)
         except HTTPClientError as e:
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
-        except KeyError as e:
-            return
+
 class setCode(RequestHandlerWithCROS):
     async def get(self, *args, **kwargs): 
         try:
@@ -267,13 +255,12 @@ class setCode(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
-        except KeyError as e:
-            return
+
 class waitCodeSet(RequestHandlerWithCROS):
     async def get(self, *args, **kwargs): 
         try:
             session_id = self.get_argument('session_id', True)
-            p.checkLoginErr(self,session_id)#################Need Login
+            p.checkLoginErr(session_id)#################Need Login
             old_code_update_time = o.code_update_time
             errordict = {
                 "error": "Timeout",
@@ -300,28 +287,26 @@ class waitCodeSet(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
-        except KeyError as e:
-            return
+
 class initToken(RequestHandlerWithCROS):
     async def get(self, *args, **kwargs): 
         try:
             session_id = self.get_argument('session_id', True)
-            p.checkLoginErr(self,session_id)#################Need Login
+            p.checkLoginErr(session_id)#################Need Login
             await o.initToken()
             self.write("OK")
         except HTTPClientError as e:
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
-        except KeyError as e:
-            return
+
 class testInit(RequestHandlerWithCROS):
     async def get(self, *args, **kwargs): 
         try:
             session_id = self.get_argument('session_id', True)
             force = self.get_argument('force', False)
             if force=="true":
-                p.checkLoginErr(self,session_id)#################Need Login if force
+                p.checkLoginErr(session_id)#################Need Login if force
                 ret = await o.testInit(force=True)
             else:
                 ret = await o.testInit()
@@ -330,26 +315,24 @@ class testInit(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
-        except KeyError as e:
-            return
+
 class refreshRegInfo(RequestHandlerWithCROS):
     async def get(self, *args, **kwargs): 
         try:
             session_id = self.get_argument('session_id', True)
-            p.checkLoginErr(self,session_id)#################Need Login
+            p.checkLoginErr(session_id)#################Need Login
             ret = await o.refreshRegInfo()
             self.write("OK")
         except HTTPClientError as e:
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
-        except KeyError as e:
-            return
+
 class setDomainsAndLicences(RequestHandlerWithCROS):
     async def put(self, *args, **kwargs): 
         try:
             session_id = self.get_argument('session_id', True)
-            p.checkLoginErr(self,session_id)#################Need Login
+            p.checkLoginErr(session_id)#################Need Login
             availableDomains = json.loads(self.get_argument('availableDomains', True))
             availableLicences = json.loads(self.get_argument('availableLicences', True))
             maxAllowedLicense = int(self.get_argument('maxAllowedLicense', 1))
@@ -359,27 +342,24 @@ class setDomainsAndLicences(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
-        except KeyError as e:
-            return
+
 class getRegInfo(RequestHandlerWithCROS):
     async def get(self, *args, **kwargs): 
         try:
             guest_session_id = self.get_argument('guest_session_id', True)
-            g.checkLoginErr(self,guest_session_id)################# Guest Login
+            g.checkLoginErr(guest_session_id)################# Guest Login
             ret = o.getRegInfo()
             self.write(json.dumps(ret, indent=2, ensure_ascii=False))
         except HTTPClientError as e:
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
-        except KeyError as e:
-            return
         
 class canReg(RequestHandlerWithCROS):
     async def get(self, *args, **kwargs): 
         try:
             guest_session_id = self.get_argument('guest_session_id', True)
-            g.checkLoginErr(self,guest_session_id)################# Guest Login
+            g.checkLoginErr(guest_session_id)################# Guest Login
             username = self.get_argument('userPrincipalName', True).split("@")[0]
             domain =self.get_argument('userPrincipalName', True).split("@")[1]
             ret = await o.canReg(username,domain)
@@ -388,61 +368,53 @@ class canReg(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
-        except KeyError as e:
-            return
 class createUser(RequestHandlerWithCROS):
     async def post(self, *args, **kwargs): 
         try:
             guest_session_id = self.get_argument('guest_session_id', True)
-            g.checkLoginErr(self,guest_session_id)################# Guest Login
+            g.checkLoginErr(guest_session_id)################# Guest Login
             userPrincipalName = self.get_argument('userPrincipalName', True)
             displayName = self.get_argument('displayName', True)
             if g.loginUser[guest_session_id].get("userPrincipalName",userPrincipalName) != userPrincipalName:
                 raise o.generateError(409,"Conflict","You already created this account: "+ g.loginUser[guest_session_id].get("userPrincipalName") + ", You can't create another one.")
             ret = await o.createUser(userPrincipalName,displayName)
-            g.setProperty(self,guest_session_id,"userPrincipalName",userPrincipalName)
-            g.setProperty(self,guest_session_id,"displayName",displayName)
-            g.setProperty(self,guest_session_id,"regResult",ret)
-            g.setProperty(self,guest_session_id,"redeemed",True)
+            g.setProperty(guest_session_id,"userPrincipalName",userPrincipalName)
+            g.setProperty(guest_session_id,"displayName",displayName)
+            g.setProperty(guest_session_id,"regResult",ret)
+            g.setProperty(guest_session_id,"redeemed",True)
             self.write(json.dumps(ret, indent=2, ensure_ascii=False))
         except HTTPClientError as e:
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
-        except KeyError as e:
-            return
 class updateUser(RequestHandlerWithCROS):
     async def put(self, *args, **kwargs): 
         try:
             guest_session_id = self.get_argument('guest_session_id', True)
-            g.checkLoginErr(self,guest_session_id)################# Guest Login
+            g.checkLoginErr(guest_session_id)################# Guest Login
             userPrincipalName = g.loginUser[guest_session_id]["userPrincipalName"]
             infomation = json.loads(self.get_argument('infomation', True))
             ret = await o.updateUser(userPrincipalName,infomation)
-            g.setProperty(self,guest_session_id,"infomation",infomation)
+            g.setProperty(guest_session_id,"infomation",infomation)
             self.write("OK")
         except HTTPClientError as e:
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
-        except KeyError as e:
-            return
 class assignLicense(RequestHandlerWithCROS):
     async def post(self, *args, **kwargs): 
         try:
             guest_session_id = self.get_argument('guest_session_id', True)
-            g.checkLoginErr(self,guest_session_id)################# Guest Login
+            g.checkLoginErr(guest_session_id)################# Guest Login
             userPrincipalName = g.loginUser[guest_session_id]["userPrincipalName"]
             addLicensesID = self.get_argument('addLicensesID', "")
             ret = await o.assignLicense(userPrincipalName,addLicensesID)
-            g.setProperty(self,guest_session_id,"addLicensesID",addLicensesID)
+            g.setProperty(guest_session_id,"addLicensesID",addLicensesID)
             self.write(json.dumps(ret, indent=2, ensure_ascii=False))
         except HTTPClientError as e:
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
-        except KeyError as e:
-            return
         
         
 

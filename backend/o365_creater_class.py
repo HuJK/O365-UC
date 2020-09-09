@@ -135,13 +135,20 @@ class o365():
             self.setToken(response["access_token"],response["refresh_token"],response["expires_in"])
         return self.access_token
     async def testInit(self,force=False):
+        errordict = {
+              "error": "Refresh Token Not Set",
+              "error_description": "Please contact admin to setup server token.",
+              "error_uri": "See the full API docs at https://example.com",
+              "appName":self.appName
+            }
         if self.refresh_token == "":
-            return False
+            raise self.generateError(404,"Empty Token",json.dumps(errordict, indent=2, ensure_ascii=False))
         accessToken = await self.getToken(force=force)
         if(accessToken == ""):
-            return False
+            errordict["error"] = "Access Token Not Set"
+            raise self.generateError(404,"Empty Token",json.dumps(errordict, indent=2, ensure_ascii=False))
         else:
-            return True
+            return {"success":True,"appName":self.appName}
     async def readLicencesRaw(self):
         headers = {"Authorization":"Bearer " + await self.getToken() }
         client = tornado.httpclient.AsyncHTTPClient()

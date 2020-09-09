@@ -322,8 +322,8 @@
                 <v-row justify="end">
                   <v-btn
                     :loading="setCAPTCHA_loading"
-                    :disabled="setCAPTCHA_loading || CAPTCHA_front_end_response_field.length === 0 || CAPTCHA_frontend_head_html.length === 0 || CAPTCHA_frontend_login_html.length === 0 || CAPTCHA_verify_api_pass_btn !== true || CAPTCHA_verify_func_pass_btn !== true"
-                    :color="setCAPTCHA_color"
+                    :disabled="setCAPTCHA_loading || CAPTCHA_front_end_response_field.length === 0 || CAPTCHA_frontend_head_html.length === 0 || CAPTCHA_frontend_login_html.length === 0"
+                    :color="setCAPTCHA_color_btn_color"
                     class="ma-2 white--text"
                     @click="setCAPTCHA"
                   >
@@ -569,6 +569,14 @@
       setDomainsAndLicences_disable(){return this.setDomainsAndLicences_loading || (this.selected_domains.length === 0) || (this.selected_licences.length === 0) },
       maxAllowedLicenseList() {
           return [...Array(this.selected_licences.length).keys()].map( function (x){return x+1});
+      },
+      setCAPTCHA_color_btn_color(){
+        if(this.CAPTCHA_verify_api_pass_btn !== true || this.CAPTCHA_verify_func_pass_btn !== true){
+          return "orange";
+        }
+        else{
+          return this.setCAPTCHA_color;
+        }
       }
     },
     mounted: function(){
@@ -678,6 +686,7 @@
       ).catch(function(error){
         console.log(error);
       }).finally(function(){
+        self.CAPTCHA_verify_api_change();
         self.CAPTCHA_verify_func_change();
       })
 
@@ -747,12 +756,12 @@
     CIDaS(){
       let self = this;
       this.CIDaS_loading=true;
-      if(self.secret.indexOf("...(not showing)...") === -1 || self.client_id.indexOf("...(not showing)...") === -1 ){
+      if(self.secret.indexOf("...(hidden)...") === -1 || self.client_id.indexOf("...(hidden)...") === -1 ){
         let params = {session_id : this.$getCookie(self.cookie_prefix + "session_id")}
-        if(self.secret.indexOf("...(not showing)...") === -1){
+        if(self.secret.indexOf("...(hidden)...") === -1){
           params["secret"] = self.secret;
         }
-        if(self.client_id.indexOf("...(not showing)...") === -1){
+        if(self.client_id.indexOf("...(hidden)...") === -1){
           params["client_id"] = self.client_id;
         }
         axios.put(this.api_path + "setSecretId",null,{params : params}).then(
@@ -873,7 +882,7 @@
     initToken(){
       var self = this;
       this.InitToken_loading=true;
-      if(self.code.indexOf("...(not showing)...")=== -1 && self.code.length !== 0){
+      if(self.code.indexOf("...(hidden)...")=== -1 && self.code.length !== 0){
         axios.put(this.api_path + "Info",null,{params : {session_id : self.$getCookie(self.cookie_prefix + "session_id"),newInfo:{code:self.code}}}).then(
           function(){
             self.setInfo_color = "green";
@@ -1041,22 +1050,27 @@
       let new_config_p= {
         "CAPTCHA_enable":this.CAPTCHA_enable_p,
         "CAPTCHA_front_end_response_field":this.CAPTCHA_front_end_response_field,
-        "CAPTCHA_verify_api":JSON.parse(this.CAPTCHA_verify_api),
         "CAPTCHA_frontend_head_html":this.CAPTCHA_frontend_head_html,
         "CAPTCHA_frontend_login_html":this.CAPTCHA_frontend_login_html,
-        "CAPTCHA_verify_api_check_function":self.CAPTCHA_verify_func
+        
       };
+      if(self.CAPTCHA_verify_api_pass_btn === true){
+        new_config_p["CAPTCHA_verify_api"] = JSON.parse(self.CAPTCHA_verify_api);
+      }
+      if(self.CAPTCHA_verify_func_pass_btn === true){
+        new_config_p["CAPTCHA_verify_api_check_function"] = self.CAPTCHA_verify_func;
+      }
       let new_config_g = JSON.parse(JSON.stringify(new_config_p));
       new_config_g["CAPTCHA_enable"] = this.CAPTCHA_enable_g;
       this.setCAPTCHA_loading=true;
       axios.put(this.api_path + "CAPTCHA",null,{params : {
-        session_id : self.$getCookie(self.cookie_prefix + "session_id"),
-        new_config: {
+        session_id : self.$getCookie(self.cookie_prefix + "session_id")
+        },data:{        new_config: {
           "p":new_config_p,
           "g":new_config_g
-        }
-        
         }}
+        
+        }
       ).then(
         function(){
           self.setCAPTCHA_color = "green";

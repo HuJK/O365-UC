@@ -181,7 +181,7 @@ function(HTTPResponse) {
         with open(self.config_path,"w") as config:
             config.write(json.dumps(self.__dict__,ensure_ascii=False,indent = 2,default=lambda o:None))
         return True
-    def checkLoginErr(self,reqH,sid,errReasion = "Session expired."):
+    def checkLoginErr(self,sid,errReasion = "Session expired."):
         if self.checkLogin(sid) == False:
             errordict = {
                           "error": "Permission Denied",
@@ -190,12 +190,12 @@ function(HTTPResponse) {
                         }
             raise self.generateError(401,"Permission Denied",json.dumps(errordict, indent=2, ensure_ascii=False,default=lambda o:None))
         return self.loginUser[sid]
-    def setProperty(self,reqH,sid,key,val):
-        self.checkLoginErr(reqH,sid)
+    def setProperty(self,sid,key,val):
+        self.checkLoginErr(sid)
         self.loginUser[sid][key] = val
         with open(self.config_path,"w") as config:
             config.write(json.dumps(self.__dict__,ensure_ascii=False,indent = 2,default=lambda o:None))
-    async def login(self,reqH,password,CAPTCHA,checkOnly=False):
+    async def login(self,password,CAPTCHA,checkOnly=False):
         if self.CAPTCHA_enable == True and checkOnly == False:
             check_func_ret = await self.CAPTCHA_verify_api_check(CAPTCHA,self.CAPTCHA_verify_api_check_function,use_real=True)
             if check_func_ret==True:
@@ -222,7 +222,7 @@ function(HTTPResponse) {
             else:
                 return {"session_id":"FakeID","expore_in":self.expire_in - 1}
         else:
-            self.checkLoginErr(reqH,"",errReasion= "Invalid " + self.modName + ".")
+            self.checkLoginErr("",errReasion= "Invalid " + self.modName + ".")
 
 class pwd_guest(pwd):
     def __init__(self, *args, **kwargs):

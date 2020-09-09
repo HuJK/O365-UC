@@ -527,23 +527,25 @@
         var self = this;
         axios.get(this.api_path + "testInit").then(
           function(res){
-            if(res.data == true){
+            document.title = res.data["appName"];
+            if(res.data["success"] == true){
               self.server_init_status = true;
               self.updatePage();
             }
             else{
               self.server_init_status = false;
-              self.server_init_status_title="Invalid Server Token";
-              self.server_init_status_text = "Please contact admin to grent permissions.";
+              self.server_init_status_title="Server Token Not Set";
+              self.server_init_status_text = "Please contact admin to setup server token.";
             }
           }
           
         ).catch(function(error){
           console.log(error);
-          if (error.response) {
+          if (error.response.data["appName"] !== undefined) {
+            document.title = error.response.data["appName"];
             self.server_init_status = false;
-            self.server_init_status_title="Invalid Server Token";
-            self.server_init_status_text = "Please contact admin to grent permissions.";
+            self.server_init_status_title=error.response.data["error"];
+            self.server_init_status_text = error.response.data["error_description"].replace(/\n/g, "<br/>");
           }
           else{
             self.server_init_status = false;
@@ -551,6 +553,7 @@
             self.server_init_status_text = "Unable to connect to the server.";
           }
         }).finally(function(){
+          
           self.server_init_pending = false;
         })
       },
