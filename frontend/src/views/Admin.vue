@@ -693,6 +693,7 @@
       axios.get(this.api_path + "Info",{params : {session_id : this.$getCookie(self.cookie_prefix + "session_id")}}).then(
         function(res){
           self.appName = res.data["appName"];
+          document.title = res.data["appName"];
           self.redirect_uri = res.data["redirect_uri"] === "" ? self.api_path + "setCode" : res.data["redirect_uri"]
           self.maxAllowedLicense =res.data["maxAllowedLicense"];
           self.secret =res.data["secret"];
