@@ -418,8 +418,8 @@ class assignLicense(RequestHandlerWithCROS):
         
 class MyStaticFileHandler(tornado.web.StaticFileHandler):
     def write_error(self, status_code, *args, **kwargs):
-        # custom 404 page
         if status_code in [404]:
+            #self.set_status(200)
             self.render('o365_uc/dist/index.html')
         else:
             super().write_error(status_code, *args, **kwargs)
