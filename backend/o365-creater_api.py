@@ -154,10 +154,10 @@ class CAPTCHAHandler(RequestHandlerWithCROS):
     async def put(self, *args, **kwargs): 
         try:
             session_id = self.get_argument('session_id', True)
+            self.p.checkLoginErr(session_id)
             new_config =  json.loads(self.request.body)["new_config"]
             #if "CAPTCHA_verify_api_check_function" in new_config["p"]
             #    await self.p.check_CAPTCHA_verify_api_check_function(new_config["p"]["CAPTCHA_verify_api_check_function"])
-            self.p.checkLoginErr(session_id)
             self.p.setCAPTCHAsettings(new_config["p"])
             self.g.setCAPTCHAsettings(new_config["g"])
             self.write(json.dumps({"success":True},indent=2, ensure_ascii=False,default=lambda x:str(x)))
