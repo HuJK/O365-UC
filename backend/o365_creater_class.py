@@ -136,7 +136,7 @@ class o365():
         return self.access_token
     async def testInit(self,force=False):
         errordict = {
-              "error": "Refresh Token Not Set",
+              "error": "Empty Server Token",
               "error_description": "Please contact admin to setup server token.",
               "error_uri": "See the full API docs at https://example.com",
               "appName":self.appName
@@ -145,7 +145,7 @@ class o365():
             raise self.generateError(404,"Empty Token",json.dumps(errordict, indent=2, ensure_ascii=False))
         accessToken = await self.getToken(force=force)
         if(accessToken == ""):
-            errordict["error"] = "Access Token Not Set"
+            errordict["error"] = "Empty Access Token"
             raise self.generateError(404,"Empty Token",json.dumps(errordict, indent=2, ensure_ascii=False))
         else:
             return {"success":True,"appName":self.appName}
