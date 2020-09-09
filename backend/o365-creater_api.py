@@ -416,7 +416,13 @@ class assignLicense(RequestHandlerWithCROS):
             self.set_status(e.response.code)
             self.finish(e.response.body)
         
-        
+class MyStaticFileHandler(tornado.web.StaticFileHandler):
+    def write_error(self, status_code, *args, **kwargs):
+        # custom 404 page
+        if status_code in [404]:
+            self.render('o365_uc/dist/index.html')
+        else:
+            super().write_error(status_code, *args, **kwargs)
 
 
 if __name__ == '__main__':
@@ -439,7 +445,7 @@ if __name__ == '__main__':
         (r'/api/createUser', createUser),
         (r'/api/updateUser', updateUser),
         (r'/api/assignLicense', assignLicense),
-        (r"/(.*)", tornado.web.StaticFileHandler, {"path": "o365_uc/dist", "default_filename": "index.html"})
+        (r"/(.*)", MyStaticFileHandler, {"path": "o365_uc/dist", "default_filename": "index.html"})
     ])
     server = tornado.httpserver.HTTPServer(app, ssl_options={
            "certfile": os.path.join(os.path.abspath("."), "ssl","server.crt"),
