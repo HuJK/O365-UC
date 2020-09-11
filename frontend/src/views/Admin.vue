@@ -255,7 +255,12 @@
                     <v-container fluid v-for="(item, index) in domains" :key="index"> 
                       <v-switch v-model="selected_domains" :label="item" :value="item"></v-switch>
                     </v-container>
-
+                  <v-autocomplete
+                    :items="locatoinList"
+                    filled
+                    label="Default User Location"
+                    v-model="usageLocation"
+                  ></v-autocomplete>
 
                   </v-col>
                   <v-col>
@@ -566,6 +571,10 @@
       setPassword_loading:false,
       setPassword_color:"blue",
       setPassword_icon:"mdi-cloud-upload",
+
+      usageLocation:"TW",
+      locatoinList:["AD", "AE", "AF", "AG", "AI", "AL", "AM", "AO", "AQ", "AR", "AS", "AT", "AU", "AW", "AX", "AZ", "BA", "BB", "BD", "BE", "BF", "BG", "BH", "BI", "BJ", "BL", "BM", "BN", "BO", "BQ", "BR", "BS", "BT", "BV", "BW", "BY", "BZ", "CA", "CC", "CD", "CF", "CG", "CH", "CI", "CK", "CL", "CM", "CN", "CO", "CR", "CU", "CV", "CW", "CX", "CY", "CZ", "DE", "DJ", "DK", "DM", "DO", "DZ", "EC", "EE", "EG", "EH", "ER", "ES", "ET", "FI", "FJ", "FK", "FM", "FO", "FR", "GA", "GB", "GD", "GE", "GF", "GG", "GH", "GI", "GL", "GM", "GN", "GP", "GQ", "GR", "GS", "GT", "GU", "GW", "GY", "HK", "HM", "HN", "HR", "HT", "HU", "ID", "IE", "IL", "IM", "IN", "IO", "IQ", "IR", "IS", "IT", "JE", "JM", "JO", "JP", "KE", "KG", "KH", "KI", "KM", "KN", "KP", "KR", "KW", "KY", "KZ", "LA", "LB", "LC", "LI", "LK", "LR", "LS", "LT", "LU", "LV", "LY", "MA", "MC", "MD", "ME", "MF", "MG", "MH", "MK", "ML", "MM", "MN", "MO", "MP", "MQ", "MR", "MS", "MT", "MU", "MV", "MW", "MX", "MY", "MZ", "NA", "NC", "NE", "NF", "NG", "NI", "NL", "NO", "NP", "NR", "NU", "NZ", "OM", "PA", "PE", "PF", "PG", "PH", "PK", "PL", "PM", "PN", "PR", "PS", "PT", "PW", "PY", "QA", "RE", "RO", "RS", "RU", "RW", "SA", "SB", "SC", "SD", "SE", "SG", "SH", "SI", "SJ", "SK", "SL", "SM", "SN", "SO", "SR", "SS", "ST", "SV", "SX", "SY", "SZ", "TC", "TD", "TF", "TG", "TH", "TJ", "TK", "TL", "TM", "TN", "TO", "TR", "TT", "TV", "TW", "TZ", "UA", "UG", "UM", "US", "UY", "UZ", "VA", "VC", "VE", "VG", "VI", "VN", "VU", "WF", "WS", "XK", "YE", "YT", "ZA", "ZM", "ZW"],
+      
       
       appName : "Office 365 Account Registration Portal",
       redirect_uri : "",
@@ -743,6 +752,7 @@
           self.MAIL_msg_from = res.data["g"]["MAIL_msg_from"];
           self.MAIL_msg_subj = res.data["g"]["MAIL_msg_subj"];
           self.MAIL_msg_cont = res.data["g"]["MAIL_msg_cont"];
+          self.usageLocation = res.data["g"]["DEFAULT_usageLocation"];
         }
       ).catch(function(error){
         console.log(error);
@@ -1103,6 +1113,42 @@
       .finally(function(){
         self.setDomainsAndLicences_loading=false;
       })
+
+      let new_config_g= {
+        "DEFAULT_usageLocation":this.usageLocation,
+      };
+
+      axios.put(this.api_path + "CAPTCHA",null,{params : {
+        session_id : self.$getCookie(self.cookie_prefix + "session_id")
+        },data:{        new_config: {
+          "p":{},
+          "g":new_config_g
+        }}
+        }
+      ).then()
+      .catch(function (error){
+        if (error.response) {
+          if (error.response.data["error_description"] != undefined){
+            self.error_msg_title = error.response.data["error"];
+            self.error_msg = error.response.data["error_description"].replace(/\n/g, "<br/>");
+          }
+          else{
+            self.error_msg_title = "Error";
+            self.error_msg = error.response.data;
+          }
+        }
+        else{
+          self.error_msg_title = "Error";
+          self.error_msg = error.toString();
+        }
+        console.log(error);
+      })
+      .finally(function(){
+        self.updatePage();
+      })
+
+
+
     },
     Admin_setting(){
 

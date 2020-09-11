@@ -59,6 +59,7 @@ function(HTTPResponse) {
             "CAPTCHA_frontend_login_html" : "<div class='g-recaptcha' data-sitekey=6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI></div>",
             "_CAPTCHA_api_response_example" : None ,
             "_CAPTCHA_reused" : {},
+            "DEFAULT_usageLocation":"US",
             "GETPWD_show_mail" : False,
             "GETPWD_show_url" : False,
             "GETPWD_redirect_url" : "",
@@ -86,7 +87,8 @@ function(HTTPResponse) {
             "CAPTCHA_frontend_login_html" : self.CAPTCHA_frontend_login_html if self.CAPTCHA_enable == True else "",
             "GETPWD_show_mail" : self.GETPWD_show_mail,
             "GETPWD_show_url" : self.GETPWD_show_url,
-            "GETPWD_redirect_url" : self.GETPWD_redirect_url
+            "GETPWD_redirect_url" : self.GETPWD_redirect_url,
+            "DEFAULT_usageLocation": self.DEFAULT_usageLocation
         }
     def generateError(self,code,msg,body):
         response = tornado.httpclient.HTTPResponse(request=tornado.httpclient.HTTPRequest(url= ""),code= code, headers= None, buffer= io.StringIO(body))
@@ -94,9 +96,9 @@ function(HTTPResponse) {
     def generatePwd(self,chars,length):
         return ''.join(secrets.choice(chars) for i in range(length))
     def getCAPTCHAsettings(self):
-        return { k:v for k,v in self.__dict__.items() if (k.startswith("CAPTCHA_") or k.startswith("GETPWD_") or k.startswith("MAIL_")) }
+        return { k:v for k,v in self.__dict__.items() if (k.startswith("CAPTCHA_") or k.startswith("GETPWD_") or k.startswith("MAIL_") or k.startswith("DEFAULT_")) }
     def setCAPTCHAsettings(self,newSetting):
-        newSetting = { k:v for k,v in newSetting.items() if (k.startswith("CAPTCHA_") or k.startswith("GETPWD_") or k.startswith("MAIL_")) }
+        newSetting = { k:v for k,v in newSetting.items() if (k.startswith("CAPTCHA_") or k.startswith("GETPWD_") or k.startswith("MAIL_") or k.startswith("DEFAULT_")) }
         self.__dict__ = {**self.__dict__ , **newSetting}
         with open(self.config_path,"w") as config:
             config.write(json.dumps(self.__dict__,ensure_ascii=False,indent = 2,default=lambda o:None))

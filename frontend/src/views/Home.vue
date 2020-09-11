@@ -672,6 +672,7 @@
               self.GETPWD_show_mail = res.data["GETPWD_show_mail"];
               self.GETPWD_show_url = res.data["GETPWD_show_url"];
               self.GETPWD_redirect_url = res.data["GETPWD_redirect_url"];
+              self.usageLocation = res.data["DEFAULT_usageLocation"];
               if(self.GETPWD_show_mail){
                 self.password_in = "";
               }
