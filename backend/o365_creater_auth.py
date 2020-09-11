@@ -291,8 +291,8 @@ class pwd_guest(pwd):
     def get_pwd(self,email_in):
         if re.fullmatch(self.GETPWD_valid_mail,email_in,flags=0) == None:
             errordict = {
-                  "error": "Email not allowed",
-                  "error_description": "This email not allowed",
+                  "error": "Permission Denied",
+                  "error_description": "This email not allowed.",
                   "error_uri": "See the full API docs at https://example.com"
                 }
             raise self.generateError(401,"Not available",json.dumps(errordict, indent=2, ensure_ascii=False,default=lambda o:None))
@@ -300,7 +300,7 @@ class pwd_guest(pwd):
         if os.path.isfile(e_path):
             errordict = {
                   "error": "Email Registered",
-                  "error_description": "This email has been registered",
+                  "error_description": "This email has been registered.",
                   "error_uri": "See the full API docs at https://example.com"
                 }
             raise self.generateError(401,"Not available",json.dumps(errordict, indent=2, ensure_ascii=False,default=lambda o:None))
