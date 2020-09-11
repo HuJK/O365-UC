@@ -292,7 +292,7 @@ class pwd_guest(pwd):
         if re.fullmatch(self.GETPWD_valid_mail,email_in,flags=0) == None:
             errordict = {
                   "error": "Email not allowed",
-                  "error_description": "This email not allowed to get a invite code",
+                  "error_description": "This email not allowed",
                   "error_uri": "See the full API docs at https://example.com"
                 }
             raise self.generateError(401,"Not available",json.dumps(errordict, indent=2, ensure_ascii=False,default=lambda o:None))
