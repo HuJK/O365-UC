@@ -38,13 +38,13 @@ class RequestHandlerWithCROS(tornado.web.RequestHandler):
         super(RequestHandlerWithCROS, self).__init__(*args, **kwargs)
     def set_default_headers(self):
         self.set_header("Content-Type", "application/json; charset=utf-8")
-        self.set_header("Access-Control-Allow-Origin", "*")
-        self.set_header("Access-Control-Allow-Methods", "*")
-        self.set_header("Access-Control-Allow-Headers", "*")
-    async def options(self, *args, **kwargs): 
-        self.set_header("Access-Control-Allow-Origin", "*")
-        self.set_header("Access-Control-Allow-Methods", "*")
-        self.set_header("Access-Control-Allow-Headers", "*")
+#         self.set_header("Access-Control-Allow-Origin", "*")
+#         self.set_header("Access-Control-Allow-Methods", "*")
+#         self.set_header("Access-Control-Allow-Headers", "*")
+#     async def options(self, *args, **kwargs): 
+#         self.set_header("Access-Control-Allow-Origin", "*")
+#         self.set_header("Access-Control-Allow-Methods", "*")
+#         self.set_header("Access-Control-Allow-Headers", "*")
         self.write("OK")
 
 class loginHandler(RequestHandlerWithCROS):
@@ -70,6 +70,10 @@ class loginHandler(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
+        except Exception as e:
+            self.clear()
+            self.set_status(500)
+            self.finish(json.dumps({"error":"Internal Error","error_description":str(e)},indent=2, ensure_ascii=False,default=lambda x:str(x)))
 
     async def put(self, *args, **kwargs): 
         try:
@@ -84,6 +88,10 @@ class loginHandler(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
+        except Exception as e:
+            self.clear()
+            self.set_status(500)
+            self.finish(json.dumps({"error":"Internal Error","error_description":str(e)},indent=2, ensure_ascii=False,default=lambda x:str(x)))
 
     async def post(self, *args, **kwargs): 
         try:
@@ -95,6 +103,10 @@ class loginHandler(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
+        except Exception as e:
+            self.clear()
+            self.set_status(500)
+            self.finish(json.dumps({"error":"Internal Error","error_description":str(e)},indent=2, ensure_ascii=False,default=lambda x:str(x)))
 
     async def delete(self, *args, **kwargs): 
         try:
@@ -107,6 +119,10 @@ class loginHandler(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
+        except Exception as e:
+            self.clear()
+            self.set_status(500)
+            self.finish(json.dumps({"error":"Internal Error","error_description":str(e)},indent=2, ensure_ascii=False,default=lambda x:str(x)))
 
 class guestloginHandler(loginHandler):
     def set_default_headers(self):
@@ -160,14 +176,16 @@ class CAPTCHAHandler(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
+        except Exception as e:
+            self.clear()
+            self.set_status(500)
+            self.finish(json.dumps({"error":"Internal Error","error_description":str(e)},indent=2, ensure_ascii=False,default=lambda x:str(x)))
 
     async def put(self, *args, **kwargs): 
         try:
             session_id = self.get_argument('session_id', True)
             self.p.checkLoginErr(session_id)
             new_config =  json.loads(self.request.body)["new_config"]
-            #if "CAPTCHA_verify_api_check_function" in new_config["p"]
-            #    await self.p.check_CAPTCHA_verify_api_check_function(new_config["p"]["CAPTCHA_verify_api_check_function"])
             self.p.setCAPTCHAsettings(new_config["p"])
             self.g.setCAPTCHAsettings(new_config["g"])
             self.write(json.dumps({"success":True},indent=2, ensure_ascii=False,default=lambda x:str(x)))
@@ -175,6 +193,10 @@ class CAPTCHAHandler(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
+        except Exception as e:
+            self.clear()
+            self.set_status(500)
+            self.finish(json.dumps({"error":"Internal Error","error_description":str(e)},indent=2, ensure_ascii=False,default=lambda x:str(x)))
 
 class GetPWDHandler(RequestHandlerWithCROS):
     def __init__(self, *args, **kwargs):
@@ -197,10 +219,6 @@ class GetPWDHandler(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
-        except Exception as e:
-            self.clear()
-            self.set_status(500)
-            self.finish(json.dumps({"error":"Internal Error","error_description":str(e)},indent=2, ensure_ascii=False,default=lambda x:str(x)))
         
 
 class setInfoHandler(RequestHandlerWithCROS):
@@ -213,6 +231,10 @@ class setInfoHandler(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
+        except Exception as e:
+            self.clear()
+            self.set_status(500)
+            self.finish(json.dumps({"error":"Internal Error","error_description":str(e)},indent=2, ensure_ascii=False,default=lambda x:str(x)))
 
     async def put(self, *args, **kwargs): 
         try:
@@ -226,6 +248,10 @@ class setInfoHandler(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
+        except Exception as e:
+            self.clear()
+            self.set_status(500)
+            self.finish(json.dumps({"error":"Internal Error","error_description":str(e)},indent=2, ensure_ascii=False,default=lambda x:str(x)))
 
 
 class getSecretIdUrl(RequestHandlerWithCROS):
@@ -239,6 +265,10 @@ class getSecretIdUrl(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
+        except Exception as e:
+            self.clear()
+            self.set_status(500)
+            self.finish(json.dumps({"error":"Internal Error","error_description":str(e)},indent=2, ensure_ascii=False,default=lambda x:str(x)))
 
         
 class setSecretHandler(RequestHandlerWithCROS):
@@ -254,6 +284,10 @@ class setSecretHandler(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
+        except Exception as e:
+            self.clear()
+            self.set_status(500)
+            self.finish(json.dumps({"error":"Internal Error","error_description":str(e)},indent=2, ensure_ascii=False,default=lambda x:str(x)))
 
 class getCodeURL(RequestHandlerWithCROS):
     async def get(self, *args, **kwargs): 
@@ -266,6 +300,10 @@ class getCodeURL(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
+        except Exception as e:
+            self.clear()
+            self.set_status(500)
+            self.finish(json.dumps({"error":"Internal Error","error_description":str(e)},indent=2, ensure_ascii=False,default=lambda x:str(x)))
 
 class setCode(RequestHandlerWithCROS):
     async def get(self, *args, **kwargs): 
@@ -282,6 +320,10 @@ class setCode(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
+        except Exception as e:
+            self.clear()
+            self.set_status(500)
+            self.finish(json.dumps({"error":"Internal Error","error_description":str(e)},indent=2, ensure_ascii=False,default=lambda x:str(x)))
 
 class waitCodeSet(RequestHandlerWithCROS):
     async def get(self, *args, **kwargs): 
@@ -289,31 +331,24 @@ class waitCodeSet(RequestHandlerWithCROS):
             session_id = self.get_argument('session_id', True)
             p.checkLoginErr(session_id)#################Need Login
             old_code_update_time = o.code_update_time
-            errordict = {
-                "error": "Timeout",
-                "error_description": "Code not set within 90 seconds",
-                "error_uri": "See the full API docs at https://example.com"
-            }
-            errorcode = 417
-            errormsg = "Expectation Failed"
             for wait_sec in range(900):
                 if o.code_update_time != old_code_update_time:
                     if o.code_error == None:
-                        self.write("OK")
+                        self.write(json.dumps({"success":True}))
                         return
                     else:
-                        errorcode = 403
-                        errormsg = "Microsoft didn't return a valid code"
-                        errordict["error"] = o.code_error
-                        errordict["error_description"] = o.code_error_description
-                        break
+                        raise o.generateError(403,o.code_error,o.code_error_description,)
                 else:
                     await tornado.gen.sleep(0.1)   
-            raise o.generateError(errorcode,errormsg,json.dumps(errordict, indent=2, ensure_ascii=False))
+            raise o.generateError(417,"Timeout","Code not set within 90 seconds")
         except HTTPClientError as e:
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
+        except Exception as e:
+            self.clear()
+            self.set_status(500)
+            self.finish(json.dumps({"error":"Internal Error","error_description":str(e)},indent=2, ensure_ascii=False,default=lambda x:str(x)))
 
 class initToken(RequestHandlerWithCROS):
     async def get(self, *args, **kwargs): 
@@ -326,6 +361,10 @@ class initToken(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
+        except Exception as e:
+            self.clear()
+            self.set_status(500)
+            self.finish(json.dumps({"error":"Internal Error","error_description":str(e)},indent=2, ensure_ascii=False,default=lambda x:str(x)))
 
 class testInit(RequestHandlerWithCROS):
     async def get(self, *args, **kwargs): 
@@ -342,6 +381,10 @@ class testInit(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
+        except Exception as e:
+            self.clear()
+            self.set_status(500)
+            self.finish(json.dumps({"error":"Internal Error","error_description":str(e)},indent=2, ensure_ascii=False,default=lambda x:str(x)))
 
 class refreshRegInfo(RequestHandlerWithCROS):
     async def get(self, *args, **kwargs): 
@@ -354,6 +397,10 @@ class refreshRegInfo(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
+        except Exception as e:
+            self.clear()
+            self.set_status(500)
+            self.finish(json.dumps({"error":"Internal Error","error_description":str(e)},indent=2, ensure_ascii=False,default=lambda x:str(x)))
 
 class setDomainsAndLicences(RequestHandlerWithCROS):
     async def put(self, *args, **kwargs): 
@@ -369,6 +416,10 @@ class setDomainsAndLicences(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
+        except Exception as e:
+            self.clear()
+            self.set_status(500)
+            self.finish(json.dumps({"error":"Internal Error","error_description":str(e)},indent=2, ensure_ascii=False,default=lambda x:str(x)))
 
 class getRegInfo(RequestHandlerWithCROS):
     async def get(self, *args, **kwargs): 
@@ -381,6 +432,10 @@ class getRegInfo(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
+        except Exception as e:
+            self.clear()
+            self.set_status(500)
+            self.finish(json.dumps({"error":"Internal Error","error_description":str(e)},indent=2, ensure_ascii=False,default=lambda x:str(x)))
         
 class canReg(RequestHandlerWithCROS):
     async def get(self, *args, **kwargs): 
@@ -390,11 +445,16 @@ class canReg(RequestHandlerWithCROS):
             username = self.get_argument('userPrincipalName', True).split("@")[0]
             domain =self.get_argument('userPrincipalName', True).split("@")[1]
             ret = await o.canReg(username,domain)
-            self.write(str(ret))
+            self.write(json.dumps(ret, indent=2, ensure_ascii=False))
         except HTTPClientError as e:
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
+        except Exception as e:
+            self.clear()
+            self.set_status(500)
+            self.finish(json.dumps({"error":"Internal Error","error_description":str(e)},indent=2, ensure_ascii=False,default=lambda x:str(x)))
+            
 class createUser(RequestHandlerWithCROS):
     async def post(self, *args, **kwargs): 
         try:
@@ -414,6 +474,11 @@ class createUser(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
+        except Exception as e:
+            self.clear()
+            self.set_status(500)
+            self.finish(json.dumps({"error":"Internal Error","error_description":str(e)},indent=2, ensure_ascii=False,default=lambda x:str(x)))
+            
 class updateUser(RequestHandlerWithCROS):
     async def put(self, *args, **kwargs): 
         try:
@@ -428,6 +493,11 @@ class updateUser(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
+        except Exception as e:
+            self.clear()
+            self.set_status(500)
+            self.finish(json.dumps({"error":"Internal Error","error_description":str(e)},indent=2, ensure_ascii=False,default=lambda x:str(x)))
+            
 class assignLicense(RequestHandlerWithCROS):
     async def post(self, *args, **kwargs): 
         try:
@@ -442,6 +512,10 @@ class assignLicense(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
+        except Exception as e:
+            self.clear()
+            self.set_status(500)
+            self.finish(json.dumps({"error":"Internal Error","error_description":str(e)},indent=2, ensure_ascii=False,default=lambda x:str(x)))
         
 class MyStaticFileHandler(tornado.web.StaticFileHandler):
     def write_error(self, status_code, *args, **kwargs):

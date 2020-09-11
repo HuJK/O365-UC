@@ -90,9 +90,11 @@ function(HTTPResponse) {
             "GETPWD_redirect_url" : self.GETPWD_redirect_url,
             "DEFAULT_usageLocation": self.DEFAULT_usageLocation
         }
-    def generateError(self,code,msg,body):
-        response = tornado.httpclient.HTTPResponse(request=tornado.httpclient.HTTPRequest(url= ""),code= code, headers= None, buffer= io.StringIO(body))
-        return HTTPClientError(code=code, message= msg, response=response)
+    def generateError(self,code,error_title,error_description,error_url="https://example.com",add_info={}):
+        errordict = {"error":error_title,"error_description":error_description,"error_uri":"See the full API docs at "+error_url}
+        errordict = {**errordict,**add_info}
+        response = tornado.httpclient.HTTPResponse(request=tornado.httpclient.HTTPRequest(url= ""),code= code, headers= None, buffer= io.StringIO(json.dumps(errordict, indent=2, ensure_ascii=False)))
+        return HTTPClientError(code=code, message= json.dumps(errordict, indent=2, ensure_ascii=False), response=response)
     def generatePwd(self,chars,length):
         return ''.join(secrets.choice(chars) for i in range(length))
     def getCAPTCHAsettings(self):
@@ -122,12 +124,7 @@ function(HTTPResponse) {
             self._CAPTCHA_api_response_example = response
             return response
         except Exception as e:
-            errordict = {
-                          "error": "CAPTCHA api fetch error",
-                          "error_description": str(e),
-                          "error_uri": "See the full API docs at https://www.tornadoweb.org/en/stable/httpclient.html#tornado.httpclient.AsyncHTTPClient.fetch"
-                        }
-            raise self.generateError(400,"JsException",json.dumps(errordict, indent=2, ensure_ascii=False,default=lambda o:None))
+            raise self.generateError(400,"CAPTCHA API fetch error",str(e),error_url="https://www.tornadoweb.org/en/stable/httpclient.html#tornado.httpclient.AsyncHTTPClient.fetch")
     def check_func_wrapper(self,func,parm,retv):
         try:
             retv["val"] = func(parm)
@@ -143,12 +140,7 @@ function(HTTPResponse) {
         try:
             check_func = js2py.eval_js(jsfuncstr)
         except Exception as e:
-            errordict = {
-                          "error": "JsException",
-                          "error_description": str(e),
-                          "error_uri": "See the full API docs at https://github.com/PiotrDabkowski/Js2Py"
-                        }
-            raise self.generateError(400,"JsException",json.dumps(errordict, indent=2, ensure_ascii=False,default=lambda o:None))
+            raise self.generateError(400,"JsException",str(e),error_url="https://github.com/PiotrDabkowski/Js2Py")
         timeout = 0.1
         if self._CAPTCHA_api_response_example == None or use_real:
             timeout = 0.2
@@ -165,30 +157,15 @@ function(HTTPResponse) {
                 prcs.terminate()
                 raise TimeoutError("TimeoutError: Maximum execution time exceeded in your response_check_function.")
         except Exception as e:
-            errordict = {
-                          "error": "JsException",
-                          "error_description": str(e),
-                          "error_uri": "See the full API docs at https://github.com/PiotrDabkowski/Js2Py"
-                        }
-            raise self.generateError(400,"JsException",json.dumps(errordict, indent=2, ensure_ascii=False,default=lambda o:None))
+            raise self.generateError(400,"JsException",str(e),"https://github.com/PiotrDabkowski/Js2Py")
         if func_ret["err"] != None:
-            errordict = {
-                      "error": "JsRuntimeError",
-                      "error_description": func_ret["err"],
-                      "error_uri": "See the full API docs at https://github.com/PiotrDabkowski/Js2Py"
-                    }
-            raise self.generateError(400,"JsRuntimeError",json.dumps(errordict, indent=2, ensure_ascii=False,default=lambda o:None))
+            raise self.generateError(400,"JsRuntimeError",func_ret["err"],"https://github.com/PiotrDabkowski/Js2Py")
         if func_ret["val"] == True:
             return True
         elif type(func_ret["val"]) == str:
             return func_ret["val"]
         else:
-            errordict = {
-                      "error": "Incompatible function",
-                      "error_description": "Your function must return true(success) or string(error_msg).",
-                      "error_uri": "See the full API docs at https://github.com/HuJK/O365-UC"
-                    }
-            raise self.generateError(400,"Incompatible function",json.dumps(errordict, indent=2, ensure_ascii=False,default=lambda o:None))
+            raise self.generateError(400,"Incompatible function","Your function must return true(success) or string(error_msg).","https://github.com/HuJK/O365-UC")
     def check(self,pwdIn):
         return hashlib.pbkdf2_hmac('sha256', pwdIn.encode("utf8"), self.password["salt"].encode("utf8"), 100000).hex() == self.password["pwdHash"]
     def setPassword(self,newPwd):
@@ -213,12 +190,7 @@ function(HTTPResponse) {
         return True
     def checkLoginErr(self,sid,errReasion = "Session expired."):
         if self.checkLogin(sid) == False:
-            errordict = {
-                          "error": "Permission Denied",
-                          "error_description": errReasion,
-                          "error_uri": "See the full API docs at https://example.com"
-                        }
-            raise self.generateError(401,"Permission Denied",json.dumps(errordict, indent=2, ensure_ascii=False,default=lambda o:None))
+            raise self.generateError(401,"Permission Denied",errReasion)
         return self.loginUser[sid]
     def setProperty(self,sid,key,val):
         self.checkLoginErr(sid)
@@ -231,12 +203,7 @@ function(HTTPResponse) {
             if check_func_ret==True:
                 pass
             else:
-                errordict = {
-                          "error": "CAPTCHA failed",
-                          "error_description": check_func_ret,
-                          "error_uri": "See the full API docs at https://example.com"
-                        }
-                raise self.generateError(401,"CAPTCHA failed",json.dumps(errordict, indent=2, ensure_ascii=False,default=lambda o:None))
+                raise self.generateError(401,"CAPTCHA failed",check_func_ret)
         ret = self.get_pwd(email_in)
         if self.CAPTCHA_enable == True:
             self._CAPTCHA_reused[CAPTCHA] = {"expire":time.time() + self.expire_in}
@@ -245,24 +212,14 @@ function(HTTPResponse) {
         return ret
 
     def get_pwd(self,email_in):
-        errordict = {
-              "error": "Not available",
-              "error_description": "Not available",
-              "error_uri": "See the full API docs at https://example.com"
-            }
-        raise self.generateError(400,"Not available",json.dumps(errordict, indent=2, ensure_ascii=False,default=lambda o:None))
+        raise self.generateError(400,"Not Implemented","Not Implemented")
     async def login(self,password,CAPTCHA,checkOnly=False):
         if self.CAPTCHA_enable == True and checkOnly == False:
             check_func_ret = await self.CAPTCHA_verify_api_check(CAPTCHA,self.CAPTCHA_verify_api_check_function,use_real=True)
             if check_func_ret==True:
                 pass
             else:
-                errordict = {
-                          "error": "CAPTCHA failed",
-                          "error_description": check_func_ret,
-                          "error_uri": "See the full API docs at https://example.com"
-                        }
-                raise self.generateError(401,"CAPTCHA failed",json.dumps(errordict, indent=2, ensure_ascii=False,default=lambda o:None))
+                raise self.generateError(401,"CAPTCHA failed",check_func_ret)
         if self.check(password):
             sid = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(32))
             if checkOnly == False:
@@ -290,27 +247,12 @@ class pwd_guest(pwd):
             config.write(json.dumps(self.__dict__,ensure_ascii=False,indent = 2,default=lambda o:None))
     def get_pwd(self,email_in):
         if self.GETPWD_show_mail == False:
-            errordict = {
-                  "error": "Permission Denied",
-                  "error_description": "Function not enabled.",
-                  "error_uri": "See the full API docs at https://example.com"
-                }
-            raise self.generateError(401,"Not available",json.dumps(errordict, indent=2, ensure_ascii=False,default=lambda o:None))
+            raise self.generateError(401,"Permission Denied","Function not enabled.")
         if re.fullmatch(self.GETPWD_valid_mail,email_in,flags=0) == None:
-            errordict = {
-                  "error": "Permission Denied",
-                  "error_description": "This email not allowed.",
-                  "error_uri": "See the full API docs at https://example.com"
-                }
-            raise self.generateError(401,"Permission Denied",json.dumps(errordict, indent=2, ensure_ascii=False,default=lambda o:None))
+            raise self.generateError(400,"Permission Denied","This email not allowed.")
         e_path = os.path.join(self.invite_code_info_path,email_in + ".json")
         if os.path.isfile(e_path):
-            errordict = {
-                  "error": "Email Registered",
-                  "error_description": "This email has been registered.",
-                  "error_uri": "See the full API docs at https://example.com"
-                }
-            raise self.generateError(401,"Not available",json.dumps(errordict, indent=2, ensure_ascii=False,default=lambda o:None))
+            raise self.generateError(409,"Email Registered","This email has been registered.")
         new_pwd = "email_code_" + self.generatePwd(string.ascii_letters + string.digits , 32)
         
         msg = MIMEMultipart('alternative')

@@ -47,11 +47,7 @@ class o365():
             config.write(json.dumps(self.__dict__,ensure_ascii=False,indent = 2))
     def getSecretIdUrl(self):
         if len(self.redirect_uri) == 0 or len(self.appName) == 0:
-            errordict = {
-                "error": "AppInfo not set",
-                "error_description": "Save application infomation first."
-            }
-            raise self.generateError(409,"Conflict",json.dumps(errordict, indent=2, ensure_ascii=False))
+            raise self.generateError(409,"AppInfo not set","Save application infomation first.")
         newapp_url = "https://apps.dev.microsoft.com/?deepLink=/quickstart/graphIO"
         params = {"publicClientSupport":"false",
                   "appName":self.appName,
@@ -89,12 +85,7 @@ class o365():
             with open(self.config_path,"w") as config:
                 config.write(json.dumps(self.__dict__,ensure_ascii=False,indent = 2))
         else:
-            errordict = {
-                "error": "Challange not pass",
-                "error_description": "The code state not match our generated state",
-                "error_uri": "See the full API docs at https://example.com"
-            }
-            raise self.generateError(409,"Conflict",json.dumps(errordict, indent=2, ensure_ascii=False))
+            raise self.generateError(409,"Challange not pass","The code state not match our generated state")
     def setToken(self,access_token,refresh_token,expires_in):
         self.access_token  = access_token
         self.refresh_token = refresh_token
@@ -135,18 +126,11 @@ class o365():
             self.setToken(response["access_token"],response["refresh_token"],response["expires_in"])
         return self.access_token
     async def testInit(self,force=False):
-        errordict = {
-              "error": "Empty Server Token",
-              "error_description": "Please contact admin to setup server token.",
-              "error_uri": "See the full API docs at https://example.com",
-              "appName":self.appName
-            }
         if self.refresh_token == "":
-            raise self.generateError(404,"Empty Token",json.dumps(errordict, indent=2, ensure_ascii=False))
+            raise self.generateError(404,"Empty Server Token","Please contact admin to setup server token.",add_info={"appName":self.appName})
         accessToken = await self.getToken(force=force)
         if(accessToken == ""):
-            errordict["error"] = "Empty Access Token"
-            raise self.generateError(404,"Empty Token",json.dumps(errordict, indent=2, ensure_ascii=False))
+            raise self.generateError(404,"Empty Access Token","Empty Server Token","Please contact admin to setup server token.",add_info={"appName":self.appName})
         else:
             return {"success":True,"appName":self.appName}
     async def readLicencesRaw(self):
@@ -197,33 +181,20 @@ class o365():
         client = tornado.httpclient.AsyncHTTPClient()
         response = await client.fetch(self.api_url + "/users?" +urllib.parse.urlencode(params) , method="GET",headers=headers)
         return json.loads(response.body)
-    def generateError(self,code,msg,body):
-        response = tornado.httpclient.HTTPResponse(request=tornado.httpclient.HTTPRequest(url= ""),code= code, headers= None, buffer= io.StringIO(body))
-        return HTTPClientError(code=code, message= msg, response=response)
+    def generateError(self,code,error_title,error_description,error_url="https://example.com",add_info={}):
+        errordict = {"error":error_title,"error_description":error_description,"error_uri":"See the full API docs at "+error_url}
+        errordict = {**errordict,**add_info}
+        response = tornado.httpclient.HTTPResponse(request=tornado.httpclient.HTTPRequest(url= ""),code= code, headers= None, buffer= io.StringIO(json.dumps(errordict, indent=2, ensure_ascii=False)))
+        return HTTPClientError(code=code, message= json.dumps(errordict, indent=2, ensure_ascii=False), response=response)
     async def canReg(self,username,domain):
         if domain not in self.availableDomains:
-            errordict = {
-                          "error": "invalid_request",
-                          "error_description": "Domain not in available domains",
-                          "error_uri": "See the full API docs at https://example.com"
-                        }
-            raise self.generateError(404,"Not Found",json.dumps(errordict, indent=2, ensure_ascii=False))
+            raise self.generateError(404,"Domain Not Available","Domain not in available domains")
         if (await self.getUser(username + "@" + domain,raise_error=False)).code != 404:
-            errordict = {
-                "error": "Username exists",
-                "error_description": "The username '" + username + "@" + domain + "' already exists. Please use a different username.",
-                "error_uri": "See the full API docs at https://example.com"
-            }
-            raise self.generateError(409,"Conflict",json.dumps(errordict, indent=2, ensure_ascii=False))
+            raise self.generateError(409,"Username Exists","The username '" + username + "@" + domain + "' already exists. Please use a different username.")
         checkusers = await self.checkUser(username + "@" + domain)
         if len(checkusers["value"]) != 0:
-            errordict = {
-                "error": "Username exists",
-                "error_description": "The username " + username + "@" + domain + " already set as " + checkusers["value"][0]["userPrincipalName"] +"'s alies. Please use a different username.",
-                "error_uri": "See the full API docs at https://example.com"
-            }
-            raise self.generateError(409,"Conflict",json.dumps(errordict, indent=2, ensure_ascii=False))
-        return True
+            raise self.generateError(409,"Username Exists","The username " + username + "@" + domain + " already set as " + checkusers["value"][0]["userPrincipalName"] +"'s alies. Please use a different username.")
+        return {"success":True}
     def generatePwd(self,chars,length):
         return ''.join(secrets.choice(chars) for i in range(length))
     async def createUser(self,userPrincipalName,displayName,password = None):
@@ -252,12 +223,7 @@ class o365():
                    'Content-Type': 'application/json'}
         allowed_key = {"aboutMe","birthday","businessPhones","city","country","department","displayName","givenName","hireDate","interests","jobTitle","mobilePhone","mySite","officeLocation","pastProjects","postalCode","preferredLanguage","responsibilities","schools","skills","state","streetAddress","surname","usageLocation"}
         if bool(set(infomation.keys()).difference(allowed_key)) == True:
-            errordict = {
-                "error": "Not allowed key",
-                "error_description": "The update key:" + str(set(infomation.keys()).difference(allowed_key)) + " not in allowed keys:" + str(allowed_key),
-                "error_uri": "See the full API docs at https://example.com"
-            }
-            raise self.generateError(400,"Bad Request",json.dumps(errordict, indent=2, ensure_ascii=False))
+            raise self.generateError(400,"Not allowed key","The update key:" + str(set(infomation.keys()).difference(allowed_key)) + " not in allowed keys:" + str(allowed_key))
         params = infomation
         client = tornado.httpclient.AsyncHTTPClient()
         response = await client.fetch(self.api_url + "/users/" + urllib.parse.quote(userPrincipalName,safe="") , method="PATCH",body = json.dumps(params) , headers = headers)
@@ -271,12 +237,7 @@ class o365():
     async def assignLicense(self,userPrincipalName,addLicensesID):
         licenseHave = (await self.ListlicenseDetails(userPrincipalName))["value"]
         if len(licenseHave) >= self.maxAllowedLicense:
-            errordict = {
-                "error": "Too much Licenses",
-                "error_description": "You already have folling license:" + str(list(map(lambda x:x["skuPartNumber"],licenseHave))) + " .But you can only have " + str(self.maxAllowedLicense) + " licenses due to admin settings.",
-                "error_uri": "See the full API docs at https://example.com"
-            }
-            raise self.generateError(409,"Conflict",json.dumps(errordict, indent=2, ensure_ascii=False))
+            raise self.generateError(409,"Too much Licenses","You already have folling license:" + str(list(map(lambda x:x["skuPartNumber"],licenseHave))) + " .But you can only have " + str(self.maxAllowedLicense) + " licenses.")
         
         headers = {"Authorization":"Bearer " + await self.getToken(),
                    'Content-Type': 'application/json'}

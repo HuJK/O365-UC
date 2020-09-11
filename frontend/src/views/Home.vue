@@ -764,7 +764,7 @@
         self.username_lock_checking = true;
         axios.get(this.api_path + "canReg",{params : {guest_session_id : this.$getCookie(self.cookie_prefix + "session_id") , userPrincipalName : self.userPrincipalName }}).then(
           function(res){
-            if(res.data==="True"){
+            if(res.data["success"]===true){
               self.checkBtn_color = "green";
               self.checkBtn_icon = "mdi-check-outline"
               self.checkBtn_text = "OK"
@@ -774,40 +774,41 @@
             else{
               self.checkBtn_color = "red";
               self.checkBtn_icon = "mdi-close-outline"
-              self.checkBtn_text = "Exists"
-              self.username_errormsg = "Username exists";
+              self.checkBtn_text = "Error"
+              self.username_errormsg = "Unknow Error";
               self.username_checked = false;
             }
           }
           
         ).catch(function(error){
-        if (error.response) {
-          if(error.response.status === 409){
-            //username conflict
-            self.checkBtn_color = "red";
-            self.checkBtn_icon = "mdi-close-outline"
-            self.checkBtn_text = "Exists"
-            self.username_errormsg = "Username exists";
-            self.username_checked = false;
-          }
-          else{
-            //normal error hendle
-            if (error.response.data["error_description"] != undefined){
-              self.error_msg_title = error.response.data["error"];
-              self.error_msg = error.response.data["error_description"].replace(/\n/g, "<br/>");
+          self.username_checked = false;
+          if (error.response) {
+            if(error.response.status === 409 || error.response.status === 404){
+              //username conflict
+              self.checkBtn_color = "red";
+              self.checkBtn_icon = "mdi-close-outline"
+              self.checkBtn_text = "Error"
+              self.username_errormsg = error.response.data["error"];
+              
             }
             else{
-              self.error_msg_title = "Error";
-              self.error_msg = error.response.data;
+              //normal error hendle
+              if (error.response.data["error_description"] != undefined){
+                self.error_msg_title = error.response.data["error"];
+                self.error_msg = error.response.data["error_description"].replace(/\n/g, "<br/>");
+              }
+              else{
+                self.error_msg_title = "Error";
+                self.error_msg = error.response.data;
+              }
             }
           }
-        }
-        else{
-          self.error_msg_title = "Error";
-          self.error_msg = error.toString();
-          self.error_msg_bool = true;
-        }
-        console.log(error);
+          else{
+            self.error_msg_title = "Error";
+            self.error_msg = error.toString();
+            self.error_msg_bool = true;
+          }
+          console.log(error);
         }).finally(function(){
           self.checkBtn_loading = false;
           self.username_lock_checking = false;
