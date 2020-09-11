@@ -45,7 +45,7 @@ class RequestHandlerWithCROS(tornado.web.RequestHandler):
 #         self.set_header("Access-Control-Allow-Origin", "*")
 #         self.set_header("Access-Control-Allow-Methods", "*")
 #         self.set_header("Access-Control-Allow-Headers", "*")
-        self.write("OK")
+#         self.write("OK")
 
 class loginHandler(RequestHandlerWithCROS):
     def __init__(self, *args, **kwargs):
