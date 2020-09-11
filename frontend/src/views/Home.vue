@@ -316,6 +316,7 @@
                     <v-btn
                       :loading="invite_loading"
                       color="error"
+                      :disabled="invite_disabled"
                       @click="SubmitInviteCode"
                     >
                       Submit
@@ -499,6 +500,7 @@
       updateBtn_disable(){return this.updateBtn_disable_1 || this.updateBtn_loading || !this.submited},
       addLicenceBtn_disable(){return this.addLicenceBtn_disable_1 || this.addLicenceBtn_loading || !this.submited},
       accInfoBtn_disable(){return this.reg_username.length === 0},
+      invite_disabled(){return this.password_in.length === 0}
     },
     mounted: function(){
       this.check_init();
@@ -548,7 +550,11 @@
       },
       SubmitInviteCode(){
         var self = this;
-        
+        if(this.password_in.length === 0){
+          return null;
+        }
+
+
         if(this.CAPTCHA_response_name === "" || document.getElementsByName(this.CAPTCHA_response_name)[0].value.length > 0){
           this.invite_loading=true;
           let CAPTCHA = document.getElementsByName(this.CAPTCHA_response_name).length > 0?document.getElementsByName(this.CAPTCHA_response_name)[0].value:"undefined";
