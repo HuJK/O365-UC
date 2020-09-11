@@ -62,7 +62,7 @@ function(HTTPResponse) {
             "DEFAULT_usageLocation":"US",
             "GETPWD_show_mail" : False,
             "GETPWD_show_url" : False,
-            "GETPWD_redirect_url" : "",
+            "GETPWD_redirect_url" : "https://example.com",
             "GETPWD_valid_mail" : r'.+@example\.com',
             "MAIL_smtp_info" : "smtp.live.com:587",
             "MAIL_smtp_auth_acc" : "username",
