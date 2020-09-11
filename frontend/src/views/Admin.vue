@@ -230,16 +230,16 @@
             <v-list-item-content>
               <v-list-item-title class="headline mb-1">Guest Settings</v-list-item-title>
               <v-col>
-                    <v-btn
-                      color="green" 
-                      class="ma-2 white--text"
-                      :loading="RefreshRegInfo_loading"
-                      :disabled="RefreshRegInfo_loading"
-                      @click="refreshRegInfo"
-                    >
-                      Refresh List
-                      <v-icon right >mdi-autorenew</v-icon>
-                    </v-btn>
+                  <v-btn
+                    color="green" 
+                    class="ma-2 white--text"
+                    :loading="RefreshRegInfo_loading"
+                    :disabled="RefreshRegInfo_loading"
+                    @click="refreshRegInfo"
+                  >
+                    Refresh List
+                    <v-icon right >mdi-autorenew</v-icon>
+                  </v-btn>
                 <v-row justify="start">
                   <v-col>
                     <v-text-field 
@@ -302,6 +302,42 @@
           </v-list-item>
         </v-card>
 
+
+        <v-card
+          class="mx-auto"
+          max-width="3440000"
+          outlined
+        >
+          <v-list-item three-line>
+            <v-list-item-content>
+              <v-list-item-title class="headline mb-1">Invite Code Settings</v-list-item-title>
+              <v-col>
+                <v-switch v-model="GETPWD_show_mail" label="Allow guests get invite code by email"></v-switch>
+                <v-text-field label="Valid emails (Regex)"  v-model="GETPWD_valid_mail" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
+                <v-text-field label="SMTP address"  v-model="MAIL_smtp_info" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
+                <v-text-field label="SMTP username"  v-model="MAIL_smtp_auth_acc" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
+                <v-text-field label="SMTP password"  v-model="MAIL_smtp_auth_pwd" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
+                <v-text-field label="Mail sender"  v-model="MAIL_msg_from" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
+                <v-text-field label="Mail subject"  v-model="MAIL_msg_subj" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
+                <v-textarea auto-grow label="Mail content" code_text spellcheck="false" v-model="MAIL_msg_cont" :rules="[ v => v.length !== 0 || 'This field is required']"></v-textarea>
+                <v-switch v-model="GETPWD_show_url" label="Users can get invite code at following url"></v-switch>
+                <v-text-field label="Redirect url"  v-model="GETPWD_redirect_url"></v-text-field> 
+                <v-row justify="end">
+                  <v-btn
+                    :loading="GETPWD_guest_btn_loading"
+                    :disabled="GETPWD_guest_btn_loading"
+                    :color="GETPWD_guest_btn_color"
+                    class="ma-2 white--text"
+                    @click="GETPWD_guest_func"
+                  >
+                    Save
+                  <v-icon right >{{GETPWD_guest_btn_icon}}</v-icon>
+                  </v-btn>
+                </v-row>
+              </v-col>
+            </v-list-item-content>
+          </v-list-item>
+        </v-card>
 
         <v-card
           class="mx-auto"
@@ -481,6 +517,21 @@
       CAPTCHA_verify_func_pass_btn : true,
       CAPTCHA_frontend_head_html : "<script src='https://www.google.com/recaptcha/api.js'> </ script>" , 
       CAPTCHA_frontend_login_html : "<div class='g-recaptcha' data-sitekey=6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI></div>",
+
+      GETPWD_guest_btn_loading : false,
+      GETPWD_guest_btn_color : "blue",
+      GETPWD_guest_btn_icon : "mdi-cloud-upload",
+      GETPWD_show_mail : false,
+      GETPWD_show_url : false,
+      GETPWD_redirect_url : "https://example.com",
+      GETPWD_valid_mail : String.raw`.+@example\.com`,
+      MAIL_smtp_info : "smtp.live.com:587",
+      MAIL_smtp_auth_acc : "username",
+      MAIL_smtp_auth_pwd : "password",
+      MAIL_msg_from : "sender@example.com",
+      MAIL_msg_subj : "Email verification",
+      MAIL_msg_cont : "Dear:\n your verification code is __new_code_here__\n",
+
       password_in : "",
       Old_password : "",
       New_password : "",
@@ -682,6 +733,16 @@
           self.CAPTCHA_frontend_head_html = res.data["g"]["CAPTCHA_frontend_head_html"];
           self.CAPTCHA_frontend_login_html = res.data["g"]["CAPTCHA_frontend_login_html"];
           self.CAPTCHA_verify_func = res.data["g"]["CAPTCHA_verify_api_check_function"];
+          self.GETPWD_show_mail = res.data["g"]["GETPWD_show_mail"];
+          self.GETPWD_show_url = res.data["g"]["GETPWD_show_url"];
+          self.GETPWD_redirect_url = res.data["g"]["GETPWD_redirect_url"];
+          self.GETPWD_valid_mail = res.data["g"]["GETPWD_valid_mail"];
+          self.MAIL_smtp_info = res.data["g"]["MAIL_smtp_info"];
+          self.MAIL_smtp_auth_acc = res.data["g"]["MAIL_smtp_auth_acc"];
+          self.MAIL_smtp_auth_pwd = res.data["g"]["MAIL_smtp_auth_pwd"];
+          self.MAIL_msg_from = res.data["g"]["MAIL_msg_from"];
+          self.MAIL_msg_subj = res.data["g"]["MAIL_msg_subj"];
+          self.MAIL_msg_cont = res.data["g"]["MAIL_msg_cont"];
         }
       ).catch(function(error){
         console.log(error);
@@ -1046,6 +1107,64 @@
     Admin_setting(){
 
     },
+    GETPWD_guest_func(){
+      var self = this;
+      let new_config_g= {
+        "GETPWD_show_mail":this.GETPWD_show_mail,
+        "GETPWD_show_url":this.GETPWD_show_url,
+        "GETPWD_redirect_url":this.GETPWD_redirect_url,
+        "GETPWD_valid_mail":this.GETPWD_valid_mail,
+        "MAIL_smtp_info":this.MAIL_smtp_info,
+        "MAIL_smtp_auth_acc":this.MAIL_smtp_auth_acc,
+        "MAIL_msg_from":this.MAIL_msg_from,
+        "MAIL_msg_subj":this.MAIL_msg_subj,
+        "MAIL_msg_cont":this.MAIL_msg_cont,
+      };
+      if(self.MAIL_smtp_auth_pwd.indexOf("...(hidden)...") === -1){
+        new_config_g["MAIL_smtp_auth_pwd"] = this.MAIL_smtp_auth_pwd;
+      }
+
+
+
+
+      self.GETPWD_guest_btn_loading = true;
+
+
+      axios.put(this.api_path + "CAPTCHA",null,{params : {
+        session_id : self.$getCookie(self.cookie_prefix + "session_id")
+        },data:{        new_config: {
+          "p":{},
+          "g":new_config_g
+        }}
+        }
+      ).then(
+        function(){
+          self.GETPWD_guest_btn_color = "green";
+          self.GETPWD_guest_btn_icon = "mdi-checkbox-marked-circle-outline"
+        })
+      .catch(function (error){
+        if (error.response) {
+          if (error.response.data["error_description"] != undefined){
+            self.error_msg_title = error.response.data["error"];
+            self.error_msg = error.response.data["error_description"].replace(/\n/g, "<br/>");
+          }
+          else{
+            self.error_msg_title = "Error";
+            self.error_msg = error.response.data;
+          }
+        }
+        else{
+          self.error_msg_title = "Error";
+          self.error_msg = error.toString();
+        }
+        console.log(error);
+      })
+      .finally(function(){
+        self.GETPWD_guest_btn_loading=false;
+        self.updatePage();
+      })
+
+    },
     setCAPTCHA(){
       var self = this;
       let new_config_p= {
@@ -1053,7 +1172,6 @@
         "CAPTCHA_front_end_response_field":this.CAPTCHA_front_end_response_field,
         "CAPTCHA_frontend_head_html":this.CAPTCHA_frontend_head_html,
         "CAPTCHA_frontend_login_html":this.CAPTCHA_frontend_login_html,
-        
       };
       if(self.CAPTCHA_verify_api_pass_btn === true){
         new_config_p["CAPTCHA_verify_api"] = JSON.parse(self.CAPTCHA_verify_api);

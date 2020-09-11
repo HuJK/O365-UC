@@ -268,14 +268,49 @@
                     class="CAPTCHAfield"
                     align='center'
                   >
-                    <v-text-field 
-                      color="blue" 
-                      :error-messages="invite_errmsg" 
-                      v-model="password_in" 
-                      outlined 
-                      label="Invite Code"
-                      @keyup.enter="SubmitInviteCode"
-                    ></v-text-field>
+                    <v-row
+                      v-if="GETPWD_show_mail"
+                    >
+                      <v-text-field 
+                        color="blue" 
+                        :error-messages="GETPWD_errmsg" 
+                        v-model="GETPWD_text" 
+                        outlined 
+                        label="Your Email"
+                        @keyup.enter="SubmitGETPWD"
+                      ></v-text-field>
+                      <v-btn
+                        :loading="GETPWD_loading"
+                        :color="GETPWD_color"
+                        height=55
+                        dark
+                        @click="SubmitGETPWD"
+                      >
+                        {{GETPWD_show_mail_btn_text}}
+                        <v-icon v-if="GETPWD_show_mail_btn_icon" right >{{GETPWD_show_mail_btn_icon}}</v-icon>
+                      </v-btn>
+                    </v-row>
+                    <v-row>
+                      <v-text-field 
+                        color="blue" 
+                        :error-messages="invite_errmsg" 
+                        v-model="password_in" 
+                        outlined 
+                        :label='GETPWD_show_mail?"Verification Code":"Invite Code"'
+                        @keyup.enter="SubmitInviteCode"
+                      ></v-text-field>
+                      <v-btn
+                        v-if="GETPWD_show_url"
+                        color="blue"
+                        height=55
+                        dark
+                        exact
+                        :href="GETPWD_redirect_url"
+                        target="_blank"
+                      >
+                        Get
+                      </v-btn>
+                    </v-row>
                   </v-col>
                   <v-row justify="center">
                     <v-btn
@@ -369,6 +404,18 @@
       CAPTCHA_response_name : "" ,
       CAPTCHA_frontend_head_html : "",
       CAPTCHA_frontend_login_html : "",
+      GETPWD_show_mail : false,
+      GETPWD_show_mail_btn_icon : null,
+      GETPWD_show_mail_btn_text : "verify",
+      GETPWD_show_url : false,
+      GETPWD_redirect_url : "https://example.com",
+      GETPWD_text : "",
+      GETPWD_loading:false,
+      GETPWD_errmsg:"",
+      GETPWD_color : "blue",
+
+
+
       invite_success : false,
       invite_loading:false,
       invite_errmsg:"",
@@ -376,7 +423,7 @@
       error_msg_title:"Error",
       error_msg:"Error message here!",
       password_in:"anonymous",
-      usageLocation:"US",
+      usageLocation:"TW",
       locatoinList:["AD", "AE", "AF", "AG", "AI", "AL", "AM", "AO", "AQ", "AR", "AS", "AT", "AU", "AW", "AX", "AZ", "BA", "BB", "BD", "BE", "BF", "BG", "BH", "BI", "BJ", "BL", "BM", "BN", "BO", "BQ", "BR", "BS", "BT", "BV", "BW", "BY", "BZ", "CA", "CC", "CD", "CF", "CG", "CH", "CI", "CK", "CL", "CM", "CN", "CO", "CR", "CU", "CV", "CW", "CX", "CY", "CZ", "DE", "DJ", "DK", "DM", "DO", "DZ", "EC", "EE", "EG", "EH", "ER", "ES", "ET", "FI", "FJ", "FK", "FM", "FO", "FR", "GA", "GB", "GD", "GE", "GF", "GG", "GH", "GI", "GL", "GM", "GN", "GP", "GQ", "GR", "GS", "GT", "GU", "GW", "GY", "HK", "HM", "HN", "HR", "HT", "HU", "ID", "IE", "IL", "IM", "IN", "IO", "IQ", "IR", "IS", "IT", "JE", "JM", "JO", "JP", "KE", "KG", "KH", "KI", "KM", "KN", "KP", "KR", "KW", "KY", "KZ", "LA", "LB", "LC", "LI", "LK", "LR", "LS", "LT", "LU", "LV", "LY", "MA", "MC", "MD", "ME", "MF", "MG", "MH", "MK", "ML", "MM", "MN", "MO", "MP", "MQ", "MR", "MS", "MT", "MU", "MV", "MW", "MX", "MY", "MZ", "NA", "NC", "NE", "NF", "NG", "NI", "NL", "NO", "NP", "NR", "NU", "NZ", "OM", "PA", "PE", "PF", "PG", "PH", "PK", "PL", "PM", "PN", "PR", "PS", "PT", "PW", "PY", "QA", "RE", "RO", "RS", "RU", "RW", "SA", "SB", "SC", "SD", "SE", "SG", "SH", "SI", "SJ", "SK", "SL", "SM", "SN", "SO", "SR", "SS", "ST", "SV", "SX", "SY", "SZ", "TC", "TD", "TF", "TG", "TH", "TJ", "TK", "TL", "TM", "TN", "TO", "TR", "TT", "TV", "TW", "TZ", "UA", "UG", "UM", "US", "UY", "UZ", "VA", "VC", "VE", "VG", "VI", "VN", "VU", "WF", "WS", "XK", "YE", "YT", "ZA", "ZM", "ZW"],
       agreement: false,
       dialog: false,
@@ -457,6 +504,48 @@
       this.check_init();
     },
     methods: {
+      SubmitGETPWD(){
+        var self = this;
+        if(self.GETPWD_show_mail_btn_icon !== null){
+          return null;
+        }
+        if(this.CAPTCHA_response_name === "" || document.getElementsByName(this.CAPTCHA_response_name)[0].value.length > 0){
+          console.log("do")
+          this.GETPWD_loading=true;
+          let CAPTCHA = document.getElementsByName(this.CAPTCHA_response_name).length > 0?document.getElementsByName(this.CAPTCHA_response_name)[0].value:"undefined";
+          axios.post(this.api_path + "GetPWD",null,{params : {bkend:"g",email : this.GETPWD_text,"CAPTCHA":CAPTCHA}}).then(
+            function(){
+              self.GETPWD_color = "green";
+              self.GETPWD_show_mail_btn_text = "Sent"
+              self.GETPWD_show_mail_btn_icon = "mdi-checkbox-marked-circle-outline";
+            })
+          .catch(function (error){
+
+            if (error.response) {
+              if (error.response.data["error_description"] != undefined){
+                self.GETPWD_errmsg=error.response.data["error"] + ": " + error.response.data["error_description"];
+              }
+              else{
+                self.GETPWD_errmsg = error.response.data;
+              }
+            }
+            else{
+              console.log(error);
+              self.GETPWD_errmsg = "Network Error."
+            }
+
+
+          })
+          .finally(function(){
+            self.GETPWD_loading=false;
+          })
+        }
+        else{
+          self.error_msg_bool = true;
+          self.error_msg_title="Captcha Required";
+          self.error_msg="Please verify that you are not a robot.";
+        }
+      },
       SubmitInviteCode(){
         var self = this;
         
@@ -580,6 +669,12 @@
               self.CAPTCHA_response_name = res.data["CAPTCHA_front_end_response_field"];
               self.CAPTCHA_frontend_head_html = res.data["CAPTCHA_frontend_head_html"];
               self.CAPTCHA_frontend_login_html = res.data["CAPTCHA_frontend_login_html"];
+              self.GETPWD_show_mail = res.data["GETPWD_show_mail"];
+              self.GETPWD_show_url = res.data["GETPWD_show_url"];
+              self.GETPWD_redirect_url = res.data["GETPWD_redirect_url"];
+              if(self.GETPWD_show_mail){
+                self.password_in = "";
+              }
               document.getElementsByTagName('head')[0].appendChild( document.createRange().createContextualFragment( self.CAPTCHA_frontend_head_html ));
               document.getElementsByClassName('CAPTCHAfield')[0].appendChild( document.createRange().createContextualFragment( self.CAPTCHA_frontend_login_html ));
             }

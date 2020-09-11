@@ -23,6 +23,15 @@ p = o365_creater_auth.pwd("./config/config_pwd.json") #admin login
 
 g = o365_creater_auth.pwd_guest("./config/config_guest.json") #guest login
 
+def protect_info(info_in,protected_keys):
+    if type(info_in) == dict:
+        return {k:protect_info(v,protected_keys) if (k in protected_keys) else v for k,v in info_in.items()}
+    if type(info_in) == list:
+        return [protect_info(x, protected_keys) for x in info_in]
+    if type(info_in) == str:
+        masklen = min(len(info_in) // 5,5)
+        return info_in[:masklen] + "...(hidden)..." + info_in[-masklen:len(info_in) if masklen!= 0 else 0] if info_in != "" else ""
+    return info_in
 
 class RequestHandlerWithCROS(tornado.web.RequestHandler):
     def __init__(self, *args, **kwargs):
@@ -46,6 +55,7 @@ class loginHandler(RequestHandlerWithCROS):
     async def get(self, *args, **kwargs): 
         try:
             get_CAPTCHA = self.get_argument('get_CAPTCHA',  default=False)
+            
             if get_CAPTCHA == "p":
                 self.write(json.dumps(self.p.getCAPTCHAhtml(),indent=2, ensure_ascii=False))
                 return
@@ -142,8 +152,8 @@ class CAPTCHAHandler(RequestHandlerWithCROS):
                 self.write(json.dumps(test_ret_d,indent=2, ensure_ascii=False,default=lambda x:str(x)))
                 return
             ret = {
-                "p":self.p.getCAPTCHAsettings(),
-                "g":self.g.getCAPTCHAsettings(),
+                "p":protect_info(self.p.getCAPTCHAsettings(),["MAIL_smtp_auth_pwd"]),
+                "g":protect_info(self.g.getCAPTCHAsettings(),["MAIL_smtp_auth_pwd"]),
             }
             self.write(json.dumps(ret, indent=2, ensure_ascii=False))
         except HTTPClientError as e:
@@ -166,17 +176,33 @@ class CAPTCHAHandler(RequestHandlerWithCROS):
             self.set_status(e.response.code)
             self.finish(e.response.body)
 
-    
+class GetPWDHandler(RequestHandlerWithCROS):
+    def __init__(self, *args, **kwargs):
+        super(GetPWDHandler, self).__init__(*args, **kwargs)
+        self.p = p
+        self.g = g
+    async def post(self, *args, **kwargs): 
+        try:
+            bkend = self.get_argument('bkend', None)
+            email = self.get_argument('email', None)
+            CAPTCHA = self.get_argument("CAPTCHA", default="")
+            if bkend == "p":
+                ret = await self.p.get_pwd_with_CAPTCHA_check(email,CAPTCHA)
+            elif bkend == "g":
+                ret = await self.g.get_pwd_with_CAPTCHA_check(email,CAPTCHA)
+            else:
+                raise HTTPClientError(code=400)
+            self.write(json.dumps(ret, indent=2, ensure_ascii=False))
+        except HTTPClientError as e:
+            self.clear()
+            self.set_status(e.response.code)
+            self.finish(e.response.body)
+        except Exception as e:
+            self.clear()
+            self.set_status(500)
+            self.finish(json.dumps({"error":"Internal Error","error_description":str(e)},indent=2, ensure_ascii=False,default=lambda x:str(x)))
         
-def protect_info(info_in,protected_keys):
-    info_out = json.loads(json.dumps(info_in))
-    for p in protected_keys:
-        if p in info_out and info_out[p] != "":
-            try:
-                info_out[p] = info_out[p][:5] + "...(hidden)..." + info_out[p][-5:]
-            except:
-                info_out[p] = info_out[p]
-    return info_out
+
 class setInfoHandler(RequestHandlerWithCROS):
     async def get(self, *args, **kwargs): 
         try:
@@ -431,6 +457,7 @@ if __name__ == '__main__':
         (r'/api/login', loginHandler),
         (r'/api/guestlogin', guestloginHandler),
         (r'/api/CAPTCHA', CAPTCHAHandler),
+        (r'/api/GetPWD', GetPWDHandler),
         (r'/api/Info', setInfoHandler),
         (r'/api/getSecretIdUrl', getSecretIdUrl),
         (r'/api/setSecretId', setSecretHandler),
