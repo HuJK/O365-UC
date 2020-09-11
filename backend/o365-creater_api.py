@@ -219,6 +219,10 @@ class GetPWDHandler(RequestHandlerWithCROS):
             self.clear()
             self.set_status(e.response.code)
             self.finish(e.response.body)
+        except Exception as e:
+            self.clear()
+            self.set_status(500)
+            self.finish(json.dumps({"error":"Internal Error","error_description":str(e)},indent=2, ensure_ascii=False,default=lambda x:str(x)))
         
 
 class setInfoHandler(RequestHandlerWithCROS):
