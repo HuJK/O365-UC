@@ -289,13 +289,20 @@ class pwd_guest(pwd):
         with open(self.config_path,"w") as config:
             config.write(json.dumps(self.__dict__,ensure_ascii=False,indent = 2,default=lambda o:None))
     def get_pwd(self,email_in):
+        if self.GETPWD_show_mail == False:
+            errordict = {
+                  "error": "Permission Denied",
+                  "error_description": "Function not enabled.",
+                  "error_uri": "See the full API docs at https://example.com"
+                }
+            raise self.generateError(401,"Not available",json.dumps(errordict, indent=2, ensure_ascii=False,default=lambda o:None))
         if re.fullmatch(self.GETPWD_valid_mail,email_in,flags=0) == None:
             errordict = {
                   "error": "Permission Denied",
                   "error_description": "This email not allowed.",
                   "error_uri": "See the full API docs at https://example.com"
                 }
-            raise self.generateError(401,"Not available",json.dumps(errordict, indent=2, ensure_ascii=False,default=lambda o:None))
+            raise self.generateError(401,"Permission Denied",json.dumps(errordict, indent=2, ensure_ascii=False,default=lambda o:None))
         e_path = os.path.join(self.invite_code_info_path,email_in + ".json")
         if os.path.isfile(e_path):
             errordict = {
