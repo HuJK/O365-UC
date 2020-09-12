@@ -24,6 +24,11 @@ tmux new -d -s o365 python3 o365-creater_api.py
 
 Then connect to [https://127.0.0.1:12536](https://127.0.0.1:12536) 
 
+If you want use different port, please edit the penultimate line at ```backend/o365_creater_api.py``` 
+```python
+    server.listen(12536)
+```
+
 #### Create accounts by invite code:
 
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/14.PNG)
@@ -40,7 +45,7 @@ Negtive number means this invite_code can redeem infinity times.
 
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/15.PNG)
 
-If you want to use mysql instead of txt rw, or your own invite code check progress, please edit line 234 to line 268 at the ```backend/o365_creater_auth.py``` file:
+If you want to use mysql instead of txt rw, or your own invite code check progress, please edit line 286 to line 320 at the ```backend/o365_creater_auth.py``` file:
 
 Please return True or False
 
