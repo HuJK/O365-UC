@@ -37,11 +37,11 @@ If you want use different port, please edit the penultimate line at ```backend/o
 
 #### Configure invite code:
 
-In the ```invite_code``` folder, each filename is a code and the content is the usage count.
+In the ```invite_code``` folder, each filename is a code and the content is the available amounts.
 
 Make sure these files only contain numbers. No any newline , or any characters other than ```[-0-9]```
 
-Negtive number means this invite_code can redeem infinity times.
+```5``` means this invite_code can redeem 5 times, and ```-1``` means it can redeem infinity times.
 
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/15.PNG)
 
