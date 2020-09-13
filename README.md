@@ -1,4 +1,4 @@
-# O365-UC
+# Office 365 Account Registration Portal
 Office 365 Account Registration Portal
 
 ## requirement
