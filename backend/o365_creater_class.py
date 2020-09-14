@@ -4,6 +4,7 @@ import time
 import os
 import io
 import secrets
+import copy
 import string
 from urllib.parse import urlencode, quote_plus
 import tornado.web
@@ -14,6 +15,8 @@ class o365():
     def __init__(self,config_path = "./config.json"):
         
         self.__dict__ = {
+                "demo_mode" : False,
+                "demo_mode_users" : {},
                 "newapp_url": "https://apps.dev.microsoft.com/?deepLink=/quickstart/graphIO",
                 "api_url": "https://graph.microsoft.com/v1.0",
                 "oauth_url": "https://login.microsoftonline.com/common/oauth2/v2.0",
@@ -187,6 +190,15 @@ class o365():
         response = tornado.httpclient.HTTPResponse(request=tornado.httpclient.HTTPRequest(url= ""),code= code, headers= None, buffer= io.StringIO(json.dumps(errordict, indent=2, ensure_ascii=False)))
         return HTTPClientError(code=code, message= json.dumps(errordict, indent=2, ensure_ascii=False), response=response)
     async def canReg(self,username,domain):
+        if self.demo_mode == True:
+            self.demo_mode_users = {k:v for (k,v) in self.demo_mode_users.items() if v["expire"] >= time.time()}
+            if username + "@" + domain in self.demo_mode_users:
+                raise self.generateError(409,"Username Exists","The username '" + username + "@" + domain + "' already exists(Demo). Please use a different username.")
+        else:
+            if len(self.demo_mode_users.keys()) != 0:
+                self.demo_mode_users = {}
+                with open(self.config_path,"w") as config:
+                    config.write(json.dumps(self.__dict__,ensure_ascii=False,indent = 2))
         if domain not in self.availableDomains:
             raise self.generateError(404,"Domain Not Available","Domain not in available domains")
         if (await self.getUser(username + "@" + domain,raise_error=False)).code != 404:
@@ -212,11 +224,19 @@ class o365():
                     "password": password
                   }
                 }
-        client = tornado.httpclient.AsyncHTTPClient()
-        response = await client.fetch(self.api_url + "/users" , method="POST",body = json.dumps(params) , headers = headers)
         ret = {}
         ret["username"] = userPrincipalName
         ret["password"] = password
+        if self.demo_mode == False:
+            client = tornado.httpclient.AsyncHTTPClient()
+            response = await client.fetch(self.api_url + "/users" , method="POST",body = json.dumps(params) , headers = headers)
+        else:
+            await tornado.gen.sleep(3)
+            ret["password"] = "DemoModeEnabled_" + password[-4:]
+            self.demo_mode_users[userPrincipalName] = ret
+            self.demo_mode_users[userPrincipalName]["displayName"] = displayName
+            self.demo_mode_users[userPrincipalName]["licenseDetails"] = []
+            self.demo_mode_users[userPrincipalName]["expire"] = time.time() + 3600
         return ret
     async def updateUser(self,userPrincipalName,infomation):
         headers = {"Authorization":"Bearer " + await self.getToken(),
@@ -225,19 +245,30 @@ class o365():
         if bool(set(infomation.keys()).difference(allowed_key)) == True:
             raise self.generateError(400,"Not allowed key","The update key:" + str(set(infomation.keys()).difference(allowed_key)) + " not in allowed keys:" + str(allowed_key))
         params = infomation
-        client = tornado.httpclient.AsyncHTTPClient()
-        response = await client.fetch(self.api_url + "/users/" + urllib.parse.quote(userPrincipalName,safe="") , method="PATCH",body = json.dumps(params) , headers = headers)
-        return response.body
+        if self.demo_mode == False:
+            client = tornado.httpclient.AsyncHTTPClient()
+            response = await client.fetch(self.api_url + "/users/" + urllib.parse.quote(userPrincipalName,safe="") , method="PATCH",body = json.dumps(params) , headers = headers)
+        else:
+            await tornado.gen.sleep(3)
+            self.demo_mode_users[userPrincipalName] = {**self.demo_mode_users[userPrincipalName],**infomation}
+        return {"success":True}
     async def ListlicenseDetails(self,userPrincipalName):
         headers = {"Authorization":"Bearer " + await self.getToken(),
                    'Content-Type': 'application/json'}
-        client = tornado.httpclient.AsyncHTTPClient()
-        response = await client.fetch(self.api_url + "/users/" + urllib.parse.quote(userPrincipalName,safe="") + "/licenseDetails" , method="GET", headers = headers)
-        return json.loads(response.body)
+        if self.demo_mode == False:
+            client = tornado.httpclient.AsyncHTTPClient()
+            response = await client.fetch(self.api_url + "/users/" + urllib.parse.quote(userPrincipalName,safe="") + "/licenseDetails" , method="GET", headers = headers)
+            return json.loads(response.body)
+        else:
+            return {"value":self.demo_mode_users[userPrincipalName]["licenseDetails"]}
     async def assignLicense(self,userPrincipalName,addLicensesID):
+        skuPartNumbers = list(filter(lambda x:x["skuId"]==addLicensesID,self.availableLicences))
+        if len(skuPartNumbers) == 0:
+            raise self.generateError(401,"SkuId Not Found","SkuId not in availableLicences")
+        skuPartNumber = skuPartNumbers[0]
         licenseHave = (await self.ListlicenseDetails(userPrincipalName))["value"]
         if len(licenseHave) >= self.maxAllowedLicense:
-            raise self.generateError(409,"Too much Licenses","You already have folling license:" + str(list(map(lambda x:x["skuPartNumber"],licenseHave))) + " .But you can only have " + str(self.maxAllowedLicense) + " licenses.")
+            raise self.generateError(409,"Too much Licenses","You already have folling license:" + str(list(map(lambda x:x["skuPartNumber"],licenseHave))) + ".\nBut you can only have " + str(self.maxAllowedLicense) + " licenses.")
         
         headers = {"Authorization":"Bearer " + await self.getToken(),
                    'Content-Type': 'application/json'}
@@ -246,9 +277,29 @@ class o365():
                       "skuId": addLicensesID
                     } ],
                   "removeLicenses": [ ] }
-        client = tornado.httpclient.AsyncHTTPClient()
-        response = await client.fetch(self.api_url + "/users/" + urllib.parse.quote(userPrincipalName,safe="") + "/assignLicense" , method="POST",body = json.dumps(params) , headers = headers)
-        return json.loads(response.body)
+        if self.demo_mode == False:
+            client = tornado.httpclient.AsyncHTTPClient()
+            response = await client.fetch(self.api_url + "/users/" + urllib.parse.quote(userPrincipalName,safe="") + "/assignLicense" , method="POST",body = json.dumps(params) , headers = headers)
+            return json.loads(response.body)
+        else:
+            await tornado.gen.sleep(3)
+            self.demo_mode_users[userPrincipalName]["licenseDetails"] += [skuPartNumber]
+            with open(self.config_path,"w") as config:
+                config.write(json.dumps(self.__dict__,ensure_ascii=False,indent = 2))
+            ret = {**{
+                      "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#users/$entity",
+                      "businessPhones": [],
+                      "givenName": "demo",
+                      "jobTitle": None,
+                      "mail": userPrincipalName,
+                      "mobilePhone": None,
+                      "officeLocation": None,
+                      "preferredLanguage": None,
+                      "id": "demo-mode-fake-id"
+                    },**self.demo_mode_users[userPrincipalName]}
+            ret = copy.deepcopy(ret)
+            del ret["licenseDetails"]
+            return ret
     async def createUserWithLicense(self,username,domain,Fname,Lname,displayName,Loc,skuId):
         print("createUser")
         ret = await self.createUser(username + "@" + domain, displayName)

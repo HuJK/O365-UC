@@ -1,5 +1,5 @@
 # Office 365 Account Registration Portal
-Office 365 Account Registration Portal
+This panel can let you distribute Office 365 account via invite code or email
 
 ## requirement
 ```bash
@@ -9,7 +9,7 @@ sudo pip3 install tornado js2py
 
 ## Installation
 ```bash
-git clone https://github.com/HuJK/O365-UC.git
+git clone --depth 1 https://github.com/HuJK/O365-UC.git
 cd O365-UC/backend/
 
 # Running in the foreground
@@ -21,7 +21,6 @@ tmux new -d -s o365 python3 o365-creater_api.py
 ```
 
 ## Usage
-
 Then connect to [https://127.0.0.1:12536](https://127.0.0.1:12536) 
 
 If you want use different port, please edit the penultimate line at ```backend/o365_creater_api.py``` 
@@ -30,8 +29,7 @@ If you want use different port, please edit the penultimate line at ```backend/o
 ```
 
 #### Create accounts by invite code:
-
-![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/14.PNG)
+![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/14.PNG) ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/14-2.PNG)
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/12.PNG)
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/13.PNG)
 
@@ -102,7 +100,10 @@ And it will be called when the user logout or other users login for all expired 
         del self.loginUser[sid]
 ```
 
+#### Configure Demo mode:
+You can enable or disable demo mode only by directly edit config file.
 
+Please edit ```backend\config\config_o365.json``` , set ```demo_mode``` to ```true``` or ```false```.
 
 ## Initial Setup:
  

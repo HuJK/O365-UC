@@ -321,7 +321,7 @@
                 <v-text-field label="Valid emails (Regex)"  v-model="GETPWD_valid_mail" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
                 <v-text-field label="SMTP address"  v-model="MAIL_smtp_info" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
                 <v-text-field label="SMTP username"  v-model="MAIL_smtp_auth_acc" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
-                <v-text-field label="SMTP password"  v-model="MAIL_smtp_auth_pwd" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
+                <v-text-field label="SMTP password"  v-model="MAIL_smtp_auth_pwd" type="password" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
                 <v-text-field label="Mail sender"  v-model="MAIL_msg_from" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
                 <v-text-field label="Mail subject"  v-model="MAIL_msg_subj" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
                 <v-textarea auto-grow label="Mail content" code_text spellcheck="false" v-model="MAIL_msg_cont" :rules="[ v => v.length !== 0 || 'This field is required']"></v-textarea>
