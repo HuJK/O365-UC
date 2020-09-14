@@ -27,8 +27,13 @@ If you want use different port, please edit the penultimate line at ```backend/o
 ```python
     server.listen(12536)
 ```
+## Demo
+[Demo Site](https://ruvm.whojk.com:2053/)
 
-[Demo](https://ruvm.whojk.com:2053/)
+| | |
+|-|-|
+|invite code | anonymous|
+|Admin password | adminn|
 
 #### Create accounts by invite code:
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/14.PNG) ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/14-2.PNG)
