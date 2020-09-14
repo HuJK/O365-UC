@@ -103,7 +103,12 @@ And it will be called when the user logout or other users login for all expired 
 #### Configure Demo mode:
 You can enable or disable demo mode only by directly edit config file.
 
-Please edit ```backend\config\config_o365.json``` , set ```demo_mode``` to ```true``` or ```false```.
+Please edit 
+```
+backend\config\config_o365.json
+backend\config\config_pwd.json
+```
+ , and set ```demo_mode``` to ```true``` or ```false```.
 
 ## Initial Setup:
  

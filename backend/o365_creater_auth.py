@@ -23,6 +23,7 @@ from tornado.httpclient import HTTPClientError
 class pwd():
     def __init__(self,config_path = "./config2.json"):
         self.__dict__ = {
+            "demo_mode" : False,
             "expire_in": 3600,
             "loginUser": {},
             "password": {},
@@ -169,6 +170,8 @@ function(HTTPResponse) {
     def check(self,pwdIn):
         return hashlib.pbkdf2_hmac('sha256', pwdIn.encode("utf8"), self.password["salt"].encode("utf8"), 100000).hex() == self.password["pwdHash"]
     def setPassword(self,newPwd):
+        if self.demo_mode == True:
+            raise self.generateError(400,"Demo mode","Not available in demo mode","https://github.com/HuJK/O365-UC")
         salt = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(32))
         pwdhash = hashlib.pbkdf2_hmac('sha256', newPwd.encode("utf8"), salt.encode("utf8"), 100000).hex()
         self.password = {"salt":salt,"pwdHash":pwdhash}
