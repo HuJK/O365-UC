@@ -28,6 +28,8 @@ If you want use different port, please edit the penultimate line at ```backend/o
     server.listen(12536)
 ```
 
+[Demo](https://ruvm.whojk.com:2053/)
+
 #### Create accounts by invite code:
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/14.PNG) ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/14-2.PNG)
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/12.PNG)
@@ -108,7 +110,8 @@ Please edit
 backend\config\config_o365.json
 backend\config\config_pwd.json
 ```
- , and set ```demo_mode``` to ```true``` or ```false```.
+, and set ```demo_mode``` to ```true``` or ```false```.
+
 
 ## Initial Setup:
  
