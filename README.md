@@ -156,3 +156,14 @@ I only tested google reCAPTCHA v2 and hCAPTCHA.
 #### Admin password
 
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/10.PNG)
+
+## License
+
+- The Html,CSS,JavaScript,and python files are licensed under the GNU General Public License v3:
+  - http://www.gnu.org/licenses/gpl-3.0.html
+
+## Author
+
+**HuJK**, Released under the [GPL-3.0](./LICENSE) License.<br>
+
+> GitHub [@HuJK](https://github.com/HuJK)
