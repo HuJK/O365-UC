@@ -136,11 +136,9 @@ class pwd():
                     port = 443 if parsed.scheme == "https" else 80
                 if re.match(r"^\[.*\]$", host):
                     host = host[1:-1]
-                t=time.time()
                 host_ips = list(filter(lambda x:x[1]==socket.SOCK_STREAM,socket.getaddrinfo(host,port)))
                 host_ips_global = list(filter(lambda x:ipaddress.ip_address(x[-1][0]).is_global,host_ips))
                 host_ips_connectable = list(filter(lambda x:check_sock,host_ips_global))
-                print(time.time()-t)
                 print(host_ips_connectable)
                 if len(host_ips_global) == 0:
                     raise self.generateError(400,"SSRF blocked","Request to local network are blocked due to SSRF protection enabled")
