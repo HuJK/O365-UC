@@ -28,7 +28,10 @@ If you want use different port, please edit the ```listen_port``` section in ```
 ## Demo
 Demo Site :
 
+Guest page
 [https://ruvm.whojk.com:2053/](https://ruvm.whojk.com:2053/)
+
+Admin page
 [https://ruvm.whojk.com:2053/admin](https://ruvm.whojk.com:2053/admin)
 
 Demo site are just for demo, it will not create users at backend.
