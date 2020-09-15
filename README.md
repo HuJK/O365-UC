@@ -26,7 +26,10 @@ Then connect to [https://127.0.0.1:12536](https://127.0.0.1:12536)
 If you want use different port, please edit the ```listen_port``` section in ```backend\config\config_pwd.json``` 
 
 ## Demo
-Demo Site :[https://ruvm.whojk.com:2053/](https://ruvm.whojk.com:2053/)
+Demo Site :
+
+[https://ruvm.whojk.com:2053/](https://ruvm.whojk.com:2053/)
+[https://ruvm.whojk.com:2053/admin](https://ruvm.whojk.com:2053/admin)
 
 Demo site are just for demo, it will not create users at backend.
 
