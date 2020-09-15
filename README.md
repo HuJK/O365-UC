@@ -34,7 +34,7 @@ Guest page:
 Admin page:
 [https://ruvm.whojk.com:2053/admin](https://ruvm.whojk.com:2053/admin)
 
-Demo site are just for demo, it will not create users at backend.
+Demo site are just for demo, it will not create real users.
 
 | | |
 |-|-|
