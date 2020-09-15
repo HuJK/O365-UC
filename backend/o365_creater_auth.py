@@ -11,6 +11,7 @@ import urllib
 import secrets
 import hashlib
 import smtplib
+import functools
 import ipaddress
 import tornado.web
 import tornado.ioloop
@@ -23,11 +24,13 @@ from email.mime.multipart import MIMEMultipart
 from urllib.parse import urlencode, quote_plus
 from tornado.httpclient import HTTPClientError
 
-
+@functools.lru_cache(maxsize=100)
 def check_sock(x):
     s = socket.socket(x[0],x[1])
     s.settimeout(1)
-    return s.connect_ex(x[-1])==0
+    ret = s.connect_ex(x[-1])==0
+    s.close()
+    return ret
 
 class pwd():
     def __init__(self,config_path = "./config2.json"):
@@ -138,7 +141,7 @@ class pwd():
                     host = host[1:-1]
                 host_ips = list(filter(lambda x:x[1]==socket.SOCK_STREAM,socket.getaddrinfo(host,port)))
                 host_ips_global = list(filter(lambda x:ipaddress.ip_address(x[-1][0]).is_global,host_ips))
-                host_ips_connectable = list(filter(lambda x:check_sock,host_ips_global))
+                host_ips_connectable = [x for x in host_ips_global if check_sock(x)]
                 if len(host_ips_global) == 0:
                     raise self.generateError(400,"SSRF blocked","Request to local network are blocked due to SSRF protection enabled")
                 if port not in self.block_SSRF_port_whitelist:
