@@ -24,9 +24,10 @@ from urllib.parse import urlencode, quote_plus
 from tornado.httpclient import HTTPClientError
 
 
-
-
-
+def check_sock(x):
+    s = socket.socket(x[0],x[1])
+    s.settimeout(1)
+    return s.connect_ex(x[-1])==0
 
 class pwd():
     def __init__(self,config_path = "./config2.json"):
@@ -53,20 +54,7 @@ class pwd():
                     'Content-Type': 'application/x-www-form-urlencoded'
                 }
             },
-            "CAPTCHA_verify_api_check_function" : """//HTTPResponse https://www.tornadoweb.org/en/stable/httpclient.html#tornado.httpclient.HTTPResponse
-function(HTTPResponse) {
-    if(HTTPResponse.code !== 200){
-        return "Bed response code: " + HTTPResponse.code;
-    }
-    else{
-        response_json = JSON.parse(HTTPResponse.body.decode("utf8"))
-        if(response_json["success"] === true){
-            return true;
-        }
-        return "CAPTCHA failed: " + JSON.stringify(response_json["error-codes"]);
-    } 
-}
-""",
+            "CAPTCHA_verify_api_check_function" : "//HTTPResponse https://www.tornadoweb.org/en/stable/httpclient.html#tornado.httpclient.HTTPResponse\nfunction(HTTPResponse) {\n    if(HTTPResponse.code !== 200){\n        return \"Bed response code: \" + HTTPResponse.code;\n    }\n    else{\n        response_json = JSON.parse(HTTPResponse.body.decode(\"utf8\"))\n        if(response_json[\"success\"] === true){\n            return true;\n        }\n        return JSON.stringify(response_json[\"error-codes\"]);\n    } \n}",
             "CAPTCHA_frontend_head_html" : "<script src='https://www.google.com/recaptcha/api.js'></script>",
             "CAPTCHA_frontend_login_html" : "<div class='g-recaptcha' data-sitekey=6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI></div>",
             "_CAPTCHA_api_response_example" : None ,
@@ -148,13 +136,23 @@ function(HTTPResponse) {
                     port = 443 if parsed.scheme == "https" else 80
                 if re.match(r"^\[.*\]$", host):
                     host = host[1:-1]
-                host_ips = set([v[-1][0] for v in socket.getaddrinfo(host,0)])
-                host_ips_is_global = list(map(lambda x:ipaddress.ip_address(x).is_global,host_ips))
-                host_ips_all_global = len(list(filter(lambda x:x==False,host_ips_is_global))) == 0
-                if host_ips_all_global == False:
+                t=time.time()
+                host_ips = list(filter(lambda x:x[1]==socket.SOCK_STREAM,socket.getaddrinfo(host,port)))
+                host_ips_global = list(filter(lambda x:ipaddress.ip_address(x[-1][0]).is_global,host_ips))
+                host_ips_connectable = list(filter(lambda x:check_sock,host_ips_global))
+                print(time.time()-t)
+                print(host_ips_connectable)
+                if len(host_ips_global) == 0:
                     raise self.generateError(400,"SSRF blocked","Request to local network are blocked due to SSRF protection enabled")
                 if port not in self.block_SSRF_port_whitelist:
                     raise self.generateError(400,"SSRF blocked","Request port are not in block_SSRF_port_whitelist.")
+                if len(host_ips_connectable) == 0:
+                    raise self.generateError(500,"CAPTCHA API fetch error","Not connectable")
+                if "follow_redirects" in request and request["follow_redirects"] == True:
+                    raise self.generateError(400,"SSRF blocked","follow_redirects are not available if SSRF protection enabled")
+                request["follow_redirects"] = False
+                host_ip = host_ips_connectable[0]
+                client = tornado.httpclient.AsyncHTTPClient(hostname_mapping={host:host_ip})
             response = await client.fetch(url,**request)
             self._CAPTCHA_api_response_example = response
             return response
