@@ -26,7 +26,15 @@ Then connect to [https://127.0.0.1:12536](https://127.0.0.1:12536)
 If you want use different port, please edit the ```listen_port``` section in ```backend\config\config_pwd.json``` 
 
 ## Demo
-[Demo Site](https://ruvm.whojk.com:2053/)
+Demo Site :
+
+Guest page:
+[https://ruvm.whojk.com:2053/](https://ruvm.whojk.com:2053/)
+
+Admin page:
+[https://ruvm.whojk.com:2053/admin](https://ruvm.whojk.com:2053/admin)
+
+Demo site are just for demo, it will not create real users.
 
 | | |
 |-|-|
@@ -148,3 +156,14 @@ I only tested google reCAPTCHA v2 and hCAPTCHA.
 #### Admin password
 
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/10.PNG)
+
+## License
+
+- The Html,CSS,JavaScript,and python files are licensed under the GNU General Public License v3:
+  - http://www.gnu.org/licenses/gpl-3.0.html
+
+## Author
+
+**HuJK**, Released under the [GPL-3.0](./LICENSE) License.<br>
+
+> GitHub [@HuJK](https://github.com/HuJK)
