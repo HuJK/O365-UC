@@ -557,5 +557,5 @@ if __name__ == '__main__':
            "certfile": os.path.join(os.path.abspath("."), "ssl","server.crt"),
            "keyfile": os.path.join(os.path.abspath("."), "ssl","server.key"),
     })
-    server.listen(12536)
+    server.listen(p.__dict__["listen_port"])
     tornado.ioloop.IOLoop.current().start()

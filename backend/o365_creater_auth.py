@@ -1,6 +1,3 @@
-import secrets
-import hashlib
-import string
 import os
 import io
 import re
@@ -8,15 +5,23 @@ import copy
 import time
 import json
 import js2py
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+import socket
+import string
+import secrets
+import hashlib
 import smtplib
-import multiprocessing
-from urllib.parse import urlencode, quote_plus
+import ipaddress
 import tornado.web
 import tornado.ioloop
+import multiprocessing
 import tornado.httpclient
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from urllib.parse import urlencode, quote_plus
 from tornado.httpclient import HTTPClientError
+
+
+
 
 
 
@@ -24,6 +29,9 @@ class pwd():
     def __init__(self,config_path = "./config2.json"):
         self.__dict__ = {
             "demo_mode" : False,
+            "block_SSRF" : True,
+            "block_SSRF_port_whitelist" : [80,443],
+            "listen_port" : 12536,
             "expire_in": 3600,
             "loginUser": {},
             "password": {},
@@ -121,6 +129,25 @@ function(HTTPResponse) {
                 del request["body_params"]
             url = request["url"]
             del request["url"]
+            if self.block_SSRF == True:
+                parsed = urllib.parse.urlsplit(_unicode(url))
+                if parsed.scheme not in ("http", "https"):
+                    raise ValueError("Unsupported url scheme: %s" % url)
+                netloc = parsed.netloc
+                if "@" in netloc:
+                    userpass, _, netloc = netloc.rpartition("@")
+                host, port = httputil.split_host_and_port(netloc)
+                if port is None:
+                    port = 443 if parsed.scheme == "https" else 80
+                if re.match(r"^\[.*\]$", host):
+                    host = host[1:-1]
+                host_ips = set([v[-1][0] for v in socket.getaddrinfo(host,0)])
+                host_ips_is_global = list(map(lambda x:ipaddress.ip_address(x).is_global,host_ips))
+                host_ips_all_global = len(list(filter(lambda x:x==False,host_ips_is_global))) == 0
+                if host_ips_all_global == False:
+                    raise self.generateError(400,"SSRF blocked","Request to local network are blocked due to SSRF protection enabled")
+                if port not in self.block_SSRF_allow_port:
+                    raise self.generateError(400,"SSRF blocked","Request port are not in block_SSRF_port_whitelist.")
             response = await client.fetch(url,**request)
             self._CAPTCHA_api_response_example = response
             return response
