@@ -23,10 +23,8 @@ tmux new -d -s o365 python3 o365-creater_api.py
 ## Usage
 Then connect to [https://127.0.0.1:12536](https://127.0.0.1:12536) 
 
-If you want use different port, please edit the penultimate line at ```backend/o365_creater_api.py``` 
-```python
-    server.listen(12536)
-```
+If you want use different port, please edit the ```listen_port``` section in ```backend\config\config_pwd.json``` 
+
 ## Demo
 [Demo Site](https://ruvm.whojk.com:2053/)
 
@@ -34,6 +32,17 @@ If you want use different port, please edit the penultimate line at ```backend/o
 |-|-|
 |invite code | anonymous|
 |Admin password | adminn|
+
+#### Enable Demo mode:
+You can enable or disable demo mode only by directly edit config file.
+
+Please edit 
+```
+backend\config\config_o365.json
+backend\config\config_pwd.json
+```
+, and than set ```demo_mode``` to ```true```.
+
 
 #### Create accounts by invite code:
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/14.PNG) ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/14-2.PNG)
@@ -106,16 +115,6 @@ And it will be called when the user logout or other users login for all expired 
                     i_fileHendler.write(str(1))
         del self.loginUser[sid]
 ```
-
-#### Configure Demo mode:
-You can enable or disable demo mode only by directly edit config file.
-
-Please edit 
-```
-backend\config\config_o365.json
-backend\config\config_pwd.json
-```
-, and set ```demo_mode``` to ```true``` or ```false```.
 
 
 ## Initial Setup:
