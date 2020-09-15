@@ -185,10 +185,14 @@ class o365():
         response = await client.fetch(self.api_url + "/users?" +urllib.parse.urlencode(params) , method="GET",headers=headers)
         return json.loads(response.body)
     def generateError(self,code,error_title,error_description,error_url="https://example.com",add_info={}):
-        errordict = {"error":error_title,"error_description":error_description,"error_uri":"See the full API docs at "+error_url}
+        if type(error_description) == HTTPClientError and "self_generated_use_raw" in error_description.__dict__ and error_description.__dict__["self_generated_use_raw"] == True:
+            return error_description
+        errordict = {"error":error_title,"error_description":str(error_description),"error_uri":"See the full API docs at "+error_url}
         errordict = {**errordict,**add_info}
         response = tornado.httpclient.HTTPResponse(request=tornado.httpclient.HTTPRequest(url= ""),code= code, headers= None, buffer= io.StringIO(json.dumps(errordict, indent=2, ensure_ascii=False)))
-        return HTTPClientError(code=code, message= json.dumps(errordict, indent=2, ensure_ascii=False), response=response)
+        ret = HTTPClientError(code=code, message= json.dumps(errordict, indent=2, ensure_ascii=False), response=response)
+        ret.__dict__["self_generated_use_raw"] = True
+        return ret
     async def canReg(self,username,domain):
         if self.demo_mode == True:
             self.demo_mode_users = {k:v for (k,v) in self.demo_mode_users.items() if v["expire"] >= time.time()}

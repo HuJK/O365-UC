@@ -103,10 +103,14 @@ function(HTTPResponse) {
             "DEFAULT_usageLocation": self.DEFAULT_usageLocation
         }
     def generateError(self,code,error_title,error_description,error_url="https://example.com",add_info={}):
-        errordict = {"error":error_title,"error_description":error_description,"error_uri":"See the full API docs at "+error_url}
+        if type(error_description) == HTTPClientError and "self_generated_use_raw" in error_description.__dict__ and error_description.__dict__["self_generated_use_raw"] == True:
+            return error_description
+        errordict = {"error":error_title,"error_description":str(error_description),"error_uri":"See the full API docs at "+error_url}
         errordict = {**errordict,**add_info}
         response = tornado.httpclient.HTTPResponse(request=tornado.httpclient.HTTPRequest(url= ""),code= code, headers= None, buffer= io.StringIO(json.dumps(errordict, indent=2, ensure_ascii=False)))
-        return HTTPClientError(code=code, message= json.dumps(errordict, indent=2, ensure_ascii=False), response=response)
+        ret = HTTPClientError(code=code, message= json.dumps(errordict, indent=2, ensure_ascii=False), response=response)
+        ret.__dict__["self_generated_use_raw"] = True
+        return ret
     def generatePwd(self,chars,length):
         return ''.join(secrets.choice(chars) for i in range(length))
     def getCAPTCHAsettings(self):
@@ -155,7 +159,7 @@ function(HTTPResponse) {
             self._CAPTCHA_api_response_example = response
             return response
         except Exception as e:
-            raise self.generateError(400,"CAPTCHA API fetch error",str(e),error_url="https://www.tornadoweb.org/en/stable/httpclient.html#tornado.httpclient.AsyncHTTPClient.fetch")
+            raise self.generateError(400,"CAPTCHA API fetch error",e,error_url="https://www.tornadoweb.org/en/stable/httpclient.html#tornado.httpclient.AsyncHTTPClient.fetch")
     def check_func_wrapper(self,func,parm,retv):
         try:
             retv["val"] = func(parm)
@@ -171,7 +175,7 @@ function(HTTPResponse) {
         try:
             check_func = js2py.eval_js(jsfuncstr)
         except Exception as e:
-            raise self.generateError(400,"JsException",str(e),error_url="https://github.com/PiotrDabkowski/Js2Py")
+            raise self.generateError(400,"JsException",e,error_url="https://github.com/PiotrDabkowski/Js2Py")
         timeout = 0.1
         if self._CAPTCHA_api_response_example == None or use_real:
             timeout = 0.2
@@ -188,7 +192,7 @@ function(HTTPResponse) {
                 prcs.terminate()
                 raise TimeoutError("TimeoutError: Maximum execution time exceeded in your response_check_function.")
         except Exception as e:
-            raise self.generateError(400,"JsException",str(e),"https://github.com/PiotrDabkowski/Js2Py")
+            raise self.generateError(400,"JsException",e,"https://github.com/PiotrDabkowski/Js2Py")
         if func_ret["err"] != None:
             raise self.generateError(400,"JsRuntimeError",func_ret["err"],"https://github.com/PiotrDabkowski/Js2Py")
         if func_ret["val"] == True:
