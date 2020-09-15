@@ -149,7 +149,7 @@ function(HTTPResponse) {
                 host_ips_all_global = len(list(filter(lambda x:x==False,host_ips_is_global))) == 0
                 if host_ips_all_global == False:
                     raise self.generateError(400,"SSRF blocked","Request to local network are blocked due to SSRF protection enabled")
-                if port not in self.block_SSRF_allow_port:
+                if port not in self.block_SSRF_port_whitelist:
                     raise self.generateError(400,"SSRF blocked","Request port are not in block_SSRF_port_whitelist.")
             response = await client.fetch(url,**request)
             self._CAPTCHA_api_response_example = response
