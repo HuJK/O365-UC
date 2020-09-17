@@ -254,8 +254,8 @@ class pwd():
                 config.write(json.dumps(self.__dict__,ensure_ascii=False,indent = 2,default=lambda o:None))
         return ret
 
-    def get_pwd(self,email_in):
-        raise self.generateError(400,"Not Implemented","Not Implemented")
+    def get_pwd(self,email_in,CAPTCHA):
+        raise self.generateError(400,"Not Implemented","Not Implemented error.")
     async def login(self,password,CAPTCHA,checkOnly=False):
         if self.CAPTCHA_enable == True and checkOnly == False:
             check_func_ret = await self.CAPTCHA_verify_api_check(CAPTCHA,self.CAPTCHA_verify_api_check_function,use_real=True)
