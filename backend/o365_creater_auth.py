@@ -295,10 +295,25 @@ class pwd_guest(pwd):
         conn = sqlite3.connect(self.invite_code_db_path)
         conn.row_factory = dict_factory
         cursor = conn.cursor()
+        resend_log = []
         registers_list = cursor.execute('SELECT * FROM register_info WHERE register_email=?',[email_in]).fetchall()
         if len(registers_list) > 0:
-            raise self.generateError(409,"Email Registered","This email has been registered.")
-        new_pwd = "email_" + self.generatePwd(string.ascii_letters + string.digits , 32)
+            register_invite_code = cursor.execute('SELECT * FROM invite_code WHERE invite_code=?',[registers_list[0]["invite_code"]]).fetchall()
+            if len(register_invite_code) == 0 or register_invite_code[0]["remains"] == 0 or registers_list[0]["userPrincipalName"] != None:
+                raise self.generateError(409,"Email Registered","This email has registered.")
+            resend_log = json.loads(registers_list[0]["resend_log"])
+            if len(resend_log) >= 3:
+                raise self.generateError(409,"Quota Exceeded","This email has been resend too many times.")
+            elif len(resend_log) > 0:
+                resend_time_ago = time.time() - resend_log[-1]["time"]
+                if resend_time_ago < 180:
+                    raise self.generateError(409,"Quota Exceeded","Code has been send in " + str(int(resend_time_ago)) + " secs ago, please wait " + str(int(181-resend_time_ago)) + " secs.")
+            new_pwd = registers_list[0]["invite_code"]
+            web_msg = "resend"
+        else:
+            new_pwd = "email_" + self.generatePwd(string.ascii_letters + string.digits , 32)
+            web_msg = "send"
+        resend_log += [{"time":time.time()}]
         
         msg = MIMEMultipart('alternative')
         msg['Subject'] = self.MAIL_msg_subj
@@ -321,11 +336,14 @@ class pwd_guest(pwd):
         s.login(self.MAIL_smtp_auth_acc, self.MAIL_smtp_auth_pwd)
         s.sendmail(self.MAIL_msg_from, email_in, msg.as_string())
         s.quit()
-        cursor.execute('INSERT INTO register_info (invite_code,register_email) VALUES (?,?)',[new_pwd,email_in])
-        cursor.execute('INSERT INTO invite_code (invite_code, remains) VALUES (?, 1)',[new_pwd])
+        if web_msg == "send":
+            cursor.execute('INSERT INTO register_info (invite_code,register_email,resend_log) VALUES (?,?,?)',[new_pwd,email_in,json.dumps(resend_log)])
+            cursor.execute('INSERT INTO invite_code (invite_code, remains) VALUES (?, 1)',[new_pwd])
+        else:
+            cursor.execute('UPDATE register_info SET resend_log = ? WHERE id = ?',[json.dumps(resend_log),registers_list[0]["id"]])
         conn.commit()
         conn.close()
-        return {"success":True}
+        return {"success":True,"message":web_msg}
         
     def check(self,password):
         conn = sqlite3.connect(self.invite_code_db_path)
