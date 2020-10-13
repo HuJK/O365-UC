@@ -8,6 +8,7 @@ import js2py
 import socket
 import string
 import urllib
+import sqlite3
 import secrets
 import hashlib
 import smtplib
@@ -18,6 +19,7 @@ import tornado.ioloop
 import multiprocessing
 import tornado.httpclient
 from tornado import httputil
+from collections import defaultdict
 from tornado.escape import _unicode
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -32,6 +34,12 @@ def check_sock(x):
     s.close()
     return ret
 
+def dict_factory(cursor, row):
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
+
 class pwd():
     def __init__(self,config_path = "./config2.json"):
         self.__dict__ = {
@@ -43,6 +51,7 @@ class pwd():
             "loginUser": {},
             "password": {},
             "modName": "password",
+            "HELLO_message":None,
             "CAPTCHA_enable" : False,
             "CAPTCHA_front_end_response_field" : "g-recaptcha-response",
             "CAPTCHA_verify_api" : {
@@ -91,7 +100,8 @@ class pwd():
             "GETPWD_show_mail" : self.GETPWD_show_mail,
             "GETPWD_show_url" : self.GETPWD_show_url,
             "GETPWD_redirect_url" : self.GETPWD_redirect_url,
-            "DEFAULT_usageLocation": self.DEFAULT_usageLocation
+            "DEFAULT_usageLocation": self.DEFAULT_usageLocation,
+            "HELLO_message": self.HELLO_message
         }
     def generateError(self,code,error_title,error_description,error_url="https://example.com",add_info={}):
         if type(error_description) == HTTPClientError and "self_generated_use_raw" in error_description.__dict__ and error_description.__dict__["self_generated_use_raw"] == True:
@@ -239,15 +249,15 @@ class pwd():
                 pass
             else:
                 raise self.generateError(401,"CAPTCHA failed",check_func_ret)
-        ret = self.get_pwd(email_in)
+        ret = self.get_pwd(email_in,CAPTCHA)
         if self.CAPTCHA_enable == True:
             self._CAPTCHA_reused[CAPTCHA] = {"expire":time.time() + self.expire_in}
             with open(self.config_path,"w") as config:
                 config.write(json.dumps(self.__dict__,ensure_ascii=False,indent = 2,default=lambda o:None))
         return ret
 
-    def get_pwd(self,email_in):
-        raise self.generateError(400,"Not Implemented","Not Implemented")
+    def get_pwd(self,email_in,CAPTCHA):
+        raise self.generateError(400,"Not Implemented","Not Implemented error.")
     async def login(self,password,CAPTCHA,checkOnly=False):
         if self.CAPTCHA_enable == True and checkOnly == False:
             check_func_ret = await self.CAPTCHA_verify_api_check(CAPTCHA,self.CAPTCHA_verify_api_check_function,use_real=True)
@@ -275,20 +285,39 @@ class pwd():
 class pwd_guest(pwd):
     def __init__(self, *args, **kwargs):
         super(pwd_guest, self).__init__(*args, **kwargs)
-        self.invite_code_path = "./invite_code"
-        self.invite_code_info_path = "./invite_code_info"
+        self.invite_code_db_path = "./invite_code/datas.db"
         self.modName = "Code"
         with open(self.config_path,"w") as config:
             config.write(json.dumps(self.__dict__,ensure_ascii=False,indent = 2,default=lambda o:None))
-    def get_pwd(self,email_in):
+    def get_pwd(self,email_in,CAPTCHA):
         if self.GETPWD_show_mail == False:
             raise self.generateError(401,"Permission Denied","Function not enabled.")
         if re.fullmatch(self.GETPWD_valid_mail,email_in,flags=0) == None:
             raise self.generateError(400,"Permission Denied","This email not allowed.")
-        e_path = os.path.join(self.invite_code_info_path,email_in + ".json")
-        if os.path.isfile(e_path):
-            raise self.generateError(409,"Email Registered","This email has been registered.")
-        new_pwd = "email_code_" + self.generatePwd(string.ascii_letters + string.digits , 32)
+        conn = sqlite3.connect(self.invite_code_db_path)
+        conn.row_factory = dict_factory
+        cursor = conn.cursor()
+        resend_log = []
+        registers_list = cursor.execute('SELECT * FROM register_info WHERE register_email=?',[email_in]).fetchall()
+        if len(registers_list) > 0:
+            register_invite_code = cursor.execute('SELECT * FROM invite_code WHERE invite_code=?',[registers_list[0]["invite_code"]]).fetchall()
+            if len(register_invite_code) == 0 or register_invite_code[0]["remains"] == 0 or registers_list[0]["userPrincipalName"] != None:
+                raise self.generateError(409,"Email Registered","This email has registered.")
+            resend_log = json.loads(registers_list[0]["resend_log"])
+            if len(resend_log) >= 3:
+                raise self.generateError(409,"Quota Exceeded","This email has been resend too many times.")
+            elif len(resend_log) > 0:
+                resend_time_ago = time.time() - resend_log[-1]["time"]
+                if resend_time_ago < 180:
+                    if self.CAPTCHA_enable == True:
+                        self._CAPTCHA_reused[CAPTCHA] = {"expire":time.time() + self.expire_in}
+                    raise self.generateError(409,"Quota Exceeded","Code has been send in " + str(int(resend_time_ago)) + " secs ago, please wait " + str(int(181-resend_time_ago)) + " secs.")
+            new_pwd = registers_list[0]["invite_code"]
+            web_msg = "resend"
+        else:
+            new_pwd = "email_" + self.generatePwd(string.ascii_letters + string.digits , 32)
+            web_msg = "send"
+        resend_log += [{"time":time.time()}]
         
         msg = MIMEMultipart('alternative')
         msg['Subject'] = self.MAIL_msg_subj
@@ -311,45 +340,50 @@ class pwd_guest(pwd):
         s.login(self.MAIL_smtp_auth_acc, self.MAIL_smtp_auth_pwd)
         s.sendmail(self.MAIL_msg_from, email_in, msg.as_string())
         s.quit()
-        i_path = os.path.join(self.invite_code_path,new_pwd)
-        with open(e_path,"w") as e_fileHendler:
-            e_fileHendler.write(json.dumps({"time":time.time(),"invite_code":new_pwd}, indent=2, ensure_ascii=False,default=lambda o:None))
-        with open(i_path,"w") as i_fileHendler:
-            i_fileHendler.write(str(1))
-        return {"success":True}
+        if web_msg == "send":
+            cursor.execute('INSERT INTO register_info (invite_code,register_email,resend_log) VALUES (?,?,?)',[new_pwd,email_in,json.dumps(resend_log)])
+            cursor.execute('INSERT INTO invite_code (invite_code, remains) VALUES (?, 1)',[new_pwd])
+        else:
+            cursor.execute('UPDATE register_info SET resend_log = ? WHERE id = ?',[json.dumps(resend_log),registers_list[0]["id"]])
+        conn.commit()
+        conn.close()
+        return {"success":True,"message":web_msg}
         
     def check(self,password):
-        if "." in password or "/" in password or "\\" in password:
-            # Do not use '.' '\' '/' character in your invite code due to
-            # Security concerns
-            return False
-        i_path = os.path.join(self.invite_code_path,password)
-        if os.path.isfile(i_path):
-            with open(i_path) as i_fileHendler:
-                use_left = int(i_fileHendler.read())
-            if use_left < 0:
-                return True
-            elif use_left == 0:
-                os.remove(i_path)
-                return False
-            elif use_left == 1:
-                os.remove(i_path)
-                return True
-            else:
-                with open(i_path,"w") as i_fileHendler:
-                    i_fileHendler.write(str(use_left - 1))
-                return True
-        return False
+        conn = sqlite3.connect(self.invite_code_db_path)
+        conn.row_factory = dict_factory
+        cursor = conn.cursor()
+        result = cursor.execute('SELECT * FROM invite_code WHERE invite_code=?',[password]).fetchall()
+        ret = False
+        if len(result) > 0 and result[0]["remains"] > 0:
+            cursor.execute('UPDATE invite_code SET remains = remains - 1 WHERE invite_code=?',[password])
+            ret = True
+        conn.commit()
+        conn.close()
+        return ret
     def logout(self,sid):
+        conn = sqlite3.connect(self.invite_code_db_path)
+        conn.row_factory = dict_factory
+        cursor = conn.cursor()
         if "redeemed" in self.loginUser[sid] and self.loginUser[sid]["redeemed"] == False:
-            i_path = os.path.join(self.invite_code_path,self.loginUser[sid]["invite_code"])
-            if os.path.isfile(i_path):
-                with open(i_path) as i_fileHendler:
-                    use_left = int(i_fileHendler.read())
-                if use_left >= 0:
-                    with open(i_path,"w") as i_fileHendler:
-                        i_fileHendler.write(str(use_left + 1))
+            invite_code = self.loginUser[sid]["invite_code"]
+            cursor.execute('UPDATE invite_code SET remains = remains + 1 WHERE invite_code=?',[invite_code])
+        else:
+            user_info = defaultdict(lambda:None, self.loginUser[sid])
+            del_record = cursor.execute('SELECT * FROM register_info WHERE userPrincipalName=?',[user_info["userPrincipalName"]]).fetchall()
+            if len(del_record) > 0:
+                cursor.execute('UPDATE register_info SET userPrincipalName=? WHERE id=?',[None,del_record[0]["id"]])
+            reg_record = cursor.execute('SELECT * FROM register_info WHERE invite_code=? AND userPrincipalName IS NULL',[user_info["invite_code"]]).fetchall()
+            if len(reg_record) > 0:
+                cursor.execute('UPDATE register_info SET invite_code=? , userPrincipalName=? , displayName=? , infomation=? WHERE id=?',
+    [user_info["invite_code"],user_info["userPrincipalName"],user_info["displayName"],json.dumps(user_info["infomation"],ensure_ascii=False,default=lambda x:str(x)),reg_record[0]["id"]])
             else:
-                with open(i_path,"w") as i_fileHendler:
-                    i_fileHendler.write(str(1))
+                cursor.execute('INSERT INTO register_info (invite_code,userPrincipalName,displayName,infomation) VALUES (?,?,?,?)',[user_info["invite_code"],user_info["userPrincipalName"],user_info["displayName"],json.dumps(user_info["infomation"],indent=2, ensure_ascii=False,default=lambda x:str(x))])
         del self.loginUser[sid]
+        remain_0_invite_codes = cursor.execute('SELECT * FROM invite_code WHERE remains=0').fetchall()
+        login_user_used_codes = set([user["invite_code"] for user in self.loginUser.values()])
+        no_user_used_codes = [code["invite_code"] for code in remain_0_invite_codes if code["invite_code"] not in login_user_used_codes]
+        for invite_code in no_user_used_codes:
+            cursor.execute('DELETE FROM invite_code WHERE invite_code=?',[invite_code]).fetchall()
+        conn.commit()
+        conn.close()

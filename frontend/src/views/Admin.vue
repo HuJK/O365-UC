@@ -273,7 +273,7 @@
                       value="Registerable Licences"
                     ></v-text-field>
                     <v-container fluid v-for="(item, index) in licences" :key="index"> 
-                      <v-switch v-model="selected_licences" :label="item.skuPartNumber" :value="item" @change="maxAllowedLicense = Math.max(1,Math.min(maxAllowedLicense,selected_licences.length))"></v-switch>
+                      <v-switch v-model="selected_licences" :label="item.skuFriendlyName" :value="item" @change="registerable_licences_switch_changed"></v-switch>
                     </v-container>
                     <v-row>
                       <v-select
@@ -610,12 +610,12 @@
         "2.example.com"
       ],
       licences:[
-        { skuPartNumber: "A1" , skuId: "00121"},
-        { skuPartNumber: "A2" , skuId: "00122"},
-        { skuPartNumber: "A3" , skuId: "00123"}
+        { skuPartNumber: "A1" , skuId: "00121",skuFriendlyName:"L01"},
+        { skuPartNumber: "A2" , skuId: "00122",skuFriendlyName:"L02"},
+        { skuPartNumber: "A3" , skuId: "00123",skuFriendlyName:"L03"}
       ],
       selected_licences:[
-        { "skuPartNumber": "A1", "skuId": "00121" }, { "skuPartNumber": "A3", "skuId": "00123" }
+        { skuPartNumber: "A1" , skuId: "00121",skuFriendlyName:"L01"}, { skuPartNumber: "A3" , skuId: "00123",skuFriendlyName:"L03"}
       ],
       
       
@@ -1079,6 +1079,13 @@
       .finally(function(){
         self.RefreshRegInfo_loading=false;
       })
+    },
+    registerable_licences_switch_changed(){
+      //remove non list elements
+      let aLstr = new Set( this.licences.map(JSON.stringify))
+      this.selected_licences = this.selected_licences.filter(ll => aLstr.has( JSON.stringify(ll)))
+      this.maxAllowedLicense = Math.max(1,Math.min(this.maxAllowedLicense,this.selected_licences.length))
+      console.log(this.selected_licences);
     },
     setDomainsAndLicences(){
       var self = this;
