@@ -59,41 +59,29 @@ backend\config\config_pwd.json
 
 #### Configure invite code:
 
-In the ```invite_code``` folder, each filename is a code and the content is the available amounts.
+In the ```invite_code``` folder, there is a ```datas.db``` file. use any sqlite3 editor to edit the file.
 
-Make sure these files only contain numbers. No any newline , or any characters other than ```[-0-9]```
-
-```5``` means this invite_code can redeem 5 times, and ```-1``` means it can redeem infinity times.
+In the ```invite_code``` table, each row is a invite_code, and the ```remains``` colume is the number of remains of the invite_code
 
 ![alt text](https://raw.githubusercontent.com/HuJK/O365-UC/master/Screenshots/15.PNG)
 
-If you want to use mysql instead of txt rw, or your own invite code check progress, please edit line 286 to line 320 at the ```backend/o365_creater_auth.py``` file:
+If you want to use mysql instead of sqlite3, or your own invite code check progress, please edit line 330 to line 367 at the ```backend/o365_creater_auth.py``` file:
 
 Please return True or False
 
 ```python
     def check(self,password):
-        if "." in password or "/" in password or "\\" in password:
-            # Do not use '.' '\' '/' character in your invite code due to
-            # Security concerns
-            return False
-        i_path = os.path.join(self.invite_code_path,password)
-        if os.path.isfile(i_path):
-            with open(i_path) as i_fileHendler:
-                use_left = int(i_fileHendler.read())
-            if use_left < 0:
-                return True
-            elif use_left == 0:
-                os.remove(i_path)
-                return False
-            elif use_left == 1:
-                os.remove(i_path)
-                return True
-            else:
-                with open(i_path,"w") as i_fileHendler:
-                    i_fileHendler.write(str(use_left - 1))
-                return True
-        return False
+        conn = sqlite3.connect(self.invite_code_db_path)
+        conn.row_factory = dict_factory
+        cursor = conn.cursor()
+        result = cursor.execute('SELECT * FROM invite_code WHERE invite_code=?',[password]).fetchall()
+        ret = False
+        if len(result) > 0 and result[0]["remains"] > 0:
+            cursor.execute('UPDATE invite_code SET remains = remains - 1 WHERE invite_code=?',[password])
+            ret = True
+        conn.commit()
+        conn.close()
+        return ret
 ```
 
 The following function is check user redeemed or not. If user logout before they redeem, it will add ```use_left``` back. 
@@ -110,18 +98,31 @@ And it will be called when the user logout or other users login for all expired 
 
 ```python
     def logout(self,sid):
+        conn = sqlite3.connect(self.invite_code_db_path)
+        conn.row_factory = dict_factory
+        cursor = conn.cursor()
         if "redeemed" in self.loginUser[sid] and self.loginUser[sid]["redeemed"] == False:
-            i_path = os.path.join(self.invite_code_path,self.loginUser[sid]["invite_code"])
-            if os.path.isfile(i_path):
-                with open(i_path) as i_fileHendler:
-                    use_left = int(i_fileHendler.read())
-                if use_left >= 0:
-                    with open(i_path,"w") as i_fileHendler:
-                        i_fileHendler.write(str(use_left + 1))
+            invite_code = self.loginUser[sid]["invite_code"]
+            cursor.execute('UPDATE invite_code SET remains = remains + 1 WHERE invite_code=?',[invite_code])
+        else:
+            user_info = defaultdict(lambda:None, self.loginUser[sid])
+            del_record = cursor.execute('SELECT * FROM register_info WHERE userPrincipalName=?',[user_info["userPrincipalName"]]).fetchall()
+            if len(del_record) > 0:
+                cursor.execute('UPDATE register_info SET userPrincipalName=? WHERE id=?',[None,del_record[0]["id"]])
+            reg_record = cursor.execute('SELECT * FROM register_info WHERE invite_code=? AND userPrincipalName IS NULL',[user_info["invite_code"]]).fetchall()
+            if len(reg_record) > 0:
+                cursor.execute('UPDATE register_info SET invite_code=? , userPrincipalName=? , displayName=? , infomation=? WHERE id=?',
+    [user_info["invite_code"],user_info["userPrincipalName"],user_info["displayName"],json.dumps(user_info["infomation"],ensure_ascii=False,default=lambda x:str(x)),reg_record[0]["id"]])
             else:
-                with open(i_path,"w") as i_fileHendler:
-                    i_fileHendler.write(str(1))
+                cursor.execute('INSERT INTO register_info (invite_code,userPrincipalName,displayName,infomation) VALUES (?,?,?,?)',[user_info["invite_code"],user_info["userPrincipalName"],user_info["displayName"],json.dumps(user_info["infomation"],indent=2, ensure_ascii=False,default=lambda x:str(x))])
         del self.loginUser[sid]
+        remain_0_invite_codes = cursor.execute('SELECT * FROM invite_code WHERE remains=0').fetchall()
+        login_user_used_codes = set([user["invite_code"] for user in self.loginUser.values()])
+        no_user_used_codes = [code["invite_code"] for code in remain_0_invite_codes if code["invite_code"] not in login_user_used_codes]
+        for invite_code in no_user_used_codes:
+            cursor.execute('DELETE FROM invite_code WHERE invite_code=?',[invite_code]).fetchall()
+        conn.commit()
+        conn.close()
 ```
 
 
