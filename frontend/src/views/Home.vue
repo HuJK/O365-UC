@@ -160,7 +160,7 @@
                   :items="licences"
                   filled
                   label="Select Licences"
-                  item-text="skuPartNumber"
+                  item-text="skuFriendlyName"
                   item-value="skuId"
                   v-model="selected_licence"
                 ></v-select>
@@ -268,6 +268,13 @@
                     class="CAPTCHAfield"
                     align='center'
                   >
+                    <v-row
+                      v-if="DEFAULT_HELLO_message"
+                    >
+                    <div v-html="DEFAULT_HELLO_message.replaceAll('\n', '<br>') +'<br><br>'"> 
+
+                    </div>
+                    </v-row>
                     <v-row
                       v-if="GETPWD_show_mail"
                     >
@@ -414,7 +421,7 @@
       GETPWD_loading:false,
       GETPWD_errmsg:"",
       GETPWD_color : "blue",
-
+      DEFAULT_HELLO_message : null,
 
 
       invite_success : false,
@@ -478,10 +485,10 @@
       ],
       selected_domain: undefined,
       licences:[
-        { skuPartNumber: "A1" , skuId: "00121"},
-        { skuPartNumber: "A2" , skuId: "00122"},
-        { skuPartNumber: "A3" , skuId: "00123"},
-        { skuPartNumber: "A4" , skuId: "00124"}
+        { skuPartNumber: "A1" , skuId: "00121",skuFriendlyName:"L01"},
+        { skuPartNumber: "A2" , skuId: "00122",skuFriendlyName:"L02"},
+        { skuPartNumber: "A3" , skuId: "00123",skuFriendlyName:"L03"},
+        { skuPartNumber: "A4" , skuId: "00124",skuFriendlyName:"L04"}
       ],
       selected_licence: undefined,
 
@@ -679,6 +686,7 @@
               self.GETPWD_show_url = res.data["GETPWD_show_url"];
               self.GETPWD_redirect_url = res.data["GETPWD_redirect_url"];
               self.usageLocation = res.data["DEFAULT_usageLocation"];
+              self.DEFAULT_HELLO_message = res.data["DEFAULT_HELLO_message"];
               if(self.GETPWD_show_mail){
                 self.password_in = "";
               }

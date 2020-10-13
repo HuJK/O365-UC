@@ -51,7 +51,7 @@ class pwd():
             "loginUser": {},
             "password": {},
             "modName": "password",
-            "HELLO_message":None,
+            "DEFAULT_HELLO_message":"Welecome to <strong>Office 365</strong> Account Registration Portal.\nYou can put simple <font color=\"red\">html</font> in HELLO message.",
             "CAPTCHA_enable" : False,
             "CAPTCHA_front_end_response_field" : "g-recaptcha-response",
             "CAPTCHA_verify_api" : {
@@ -101,7 +101,7 @@ class pwd():
             "GETPWD_show_url" : self.GETPWD_show_url,
             "GETPWD_redirect_url" : self.GETPWD_redirect_url,
             "DEFAULT_usageLocation": self.DEFAULT_usageLocation,
-            "HELLO_message": self.HELLO_message
+            "DEFAULT_HELLO_message": self.DEFAULT_HELLO_message
         }
     def generateError(self,code,error_title,error_description,error_url="https://example.com",add_info={}):
         if type(error_description) == HTTPClientError and "self_generated_use_raw" in error_description.__dict__ and error_description.__dict__["self_generated_use_raw"] == True:

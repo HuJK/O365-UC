@@ -317,6 +317,7 @@
             <v-list-item-content>
               <v-list-item-title class="headline mb-1">Invite Code Settings</v-list-item-title>
               <v-col>
+                <v-textarea auto-grow label="Hello messages to registers." code_text spellcheck="false" v-model="DEFAULT_HELLO_message" ></v-textarea>
                 <v-switch v-model="GETPWD_show_mail" label="Allow guests get invite code by email"></v-switch>
                 <v-text-field label="Valid emails (Regex)"  v-model="GETPWD_valid_mail" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
                 <v-text-field label="SMTP address"  v-model="MAIL_smtp_info" :rules="[ v => v.length !== 0 || 'This field is required']"></v-text-field>
@@ -530,6 +531,7 @@
       GETPWD_show_url : false,
       GETPWD_redirect_url : "https://example.com",
       GETPWD_valid_mail : String.raw`.+@example\.com`,
+      DEFAULT_HELLO_message : "Wellcome to <b>Office 365</b> Account Registration Portal",
       MAIL_smtp_info : "smtp.live.com:587",
       MAIL_smtp_auth_acc : "username",
       MAIL_smtp_auth_pwd : "password",
@@ -746,6 +748,7 @@
           self.GETPWD_show_url = res.data["g"]["GETPWD_show_url"];
           self.GETPWD_redirect_url = res.data["g"]["GETPWD_redirect_url"];
           self.GETPWD_valid_mail = res.data["g"]["GETPWD_valid_mail"];
+          self.DEFAULT_HELLO_message = res.data["g"]["DEFAULT_HELLO_message"];
           self.MAIL_smtp_info = res.data["g"]["MAIL_smtp_info"];
           self.MAIL_smtp_auth_acc = res.data["g"]["MAIL_smtp_auth_acc"];
           self.MAIL_smtp_auth_pwd = res.data["g"]["MAIL_smtp_auth_pwd"];
@@ -1163,6 +1166,7 @@
     GETPWD_guest_func(){
       var self = this;
       let new_config_g= {
+        "DEFAULT_HELLO_message":this.DEFAULT_HELLO_message,
         "GETPWD_show_mail":this.GETPWD_show_mail,
         "GETPWD_show_url":this.GETPWD_show_url,
         "GETPWD_redirect_url":this.GETPWD_redirect_url,
