@@ -158,6 +158,7 @@ class o365():
                      'STREAM': 'Microsoft Stream Trial',
                      'EMSPREMIUM': 'ENTERPRISE MOBILITY + SECURITY E5',
                      'EXCHANGE_STANDARD_ALUMNI': 'Exchange Online (Plan 1) for alumni',
+                     'DEVELOPERPACK': 'Office 365 E3 Developer',
                      'DEVELOPERPACK_E5': 'Microsoft 365 E5 Developer (without Windows and Audio Conferencing)'
                 }
             }
