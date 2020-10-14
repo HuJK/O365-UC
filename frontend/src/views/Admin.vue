@@ -755,7 +755,6 @@
           self.MAIL_msg_from = res.data["g"]["MAIL_msg_from"];
           self.MAIL_msg_subj = res.data["g"]["MAIL_msg_subj"];
           self.MAIL_msg_cont = res.data["g"]["MAIL_msg_cont"];
-          self.usageLocation = res.data["g"]["DEFAULT_usageLocation"];
         }
       ).catch(function(error){
         console.log(error);
@@ -784,7 +783,7 @@
           self.selected_domains = res.data["availableDomains"];
           self.licences = res.data["allLicences"];
           self.selected_licences = res.data["availableLicences"];
-
+          self.usageLocation =  res.data["DEFAULT_usageLocation"];
           if(self.password_in === "admin"){
             self.setPassword_color = "red";
             self.Old_password = self.password_in;
@@ -1093,7 +1092,7 @@
     setDomainsAndLicences(){
       var self = this;
       this.setDomainsAndLicences_loading=true;
-      let params = {session_id : self.$getCookie(self.cookie_prefix + "session_id") , availableDomains : JSON.stringify( self.selected_domains), availableLicences : JSON.stringify( self.selected_licences) , maxAllowedLicense : self.maxAllowedLicense };
+      let params = {session_id : self.$getCookie(self.cookie_prefix + "session_id") , availableDomains : JSON.stringify( self.selected_domains), availableLicences : JSON.stringify( self.selected_licences) , maxAllowedLicense : self.maxAllowedLicense , DEFAULT_usageLocation:self.usageLocation };
       console.log(params);
       axios.put(this.api_path + "setDomainsAndLicences",null,{params : params}).then(
         function(){
@@ -1122,39 +1121,6 @@
       })
       .finally(function(){
         self.setDomainsAndLicences_loading=false;
-      })
-
-      let new_config_g= {
-        "DEFAULT_usageLocation":this.usageLocation,
-      };
-
-      axios.put(this.api_path + "CAPTCHA",null,{params : {
-        session_id : self.$getCookie(self.cookie_prefix + "session_id")
-        },data:{        new_config: {
-          "p":{},
-          "g":new_config_g
-        }}
-        }
-      ).then()
-      .catch(function (error){
-        if (error.response) {
-          if (error.response.data["error_description"] != undefined){
-            self.error_msg_title = error.response.data["error"];
-            self.error_msg = error.response.data["error_description"].replace(/\n/g, "<br/>");
-          }
-          else{
-            self.error_msg_title = "Error";
-            self.error_msg = error.response.data;
-          }
-        }
-        else{
-          self.error_msg_title = "Error";
-          self.error_msg = error.toString();
-        }
-        console.log(error);
-      })
-      .finally(function(){
-        self.updatePage();
       })
 
 

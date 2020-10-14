@@ -71,7 +71,6 @@ class pwd():
             "CAPTCHA_frontend_login_html" : "<div class='g-recaptcha' data-sitekey=6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI></div>",
             "_CAPTCHA_api_response_example" : None ,
             "_CAPTCHA_reused" : {},
-            "DEFAULT_usageLocation":"US",
             "GETPWD_show_mail" : False,
             "GETPWD_show_url" : False,
             "GETPWD_redirect_url" : "https://example.com",
@@ -100,7 +99,6 @@ class pwd():
             "GETPWD_show_mail" : self.GETPWD_show_mail,
             "GETPWD_show_url" : self.GETPWD_show_url,
             "GETPWD_redirect_url" : self.GETPWD_redirect_url,
-            "DEFAULT_usageLocation": self.DEFAULT_usageLocation,
             "DEFAULT_HELLO_message": self.DEFAULT_HELLO_message
         }
     def generateError(self,code,error_title,error_description,error_url="https://example.com",add_info={}):

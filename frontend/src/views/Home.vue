@@ -685,7 +685,6 @@
               self.GETPWD_show_mail = res.data["GETPWD_show_mail"];
               self.GETPWD_show_url = res.data["GETPWD_show_url"];
               self.GETPWD_redirect_url = res.data["GETPWD_redirect_url"];
-              self.usageLocation = res.data["DEFAULT_usageLocation"];
               self.DEFAULT_HELLO_message = res.data["DEFAULT_HELLO_message"];
               if(self.GETPWD_show_mail){
                 self.password_in = "";
@@ -706,6 +705,7 @@
             self.licences = res.data["availableLicences"]; 
             self.selected_domain = self.selected_domain || self.domains[0];
             self.selected_licence = self.selected_licence || self.licences[0]["skuId"];
+            self.usageLocation = res.data["DEFAULT_usageLocation"];
             self.updatePage2();
           }
           
