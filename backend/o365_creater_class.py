@@ -270,7 +270,7 @@ class o365():
         licences = await self.readLicencesRaw()
         need_keys = ["skuId" ,"skuPartNumber"]
         ret_list = [{"skuId":x["skuId"],"skuPartNumber":x["skuPartNumber"],"skuFriendlyName":self.licenses_friendly_name[x["skuPartNumber"]] if x["skuPartNumber"] in self.licenses_friendly_name else x["skuPartNumber"]} for x in licences["value"]]
-        ret_list = sorted(ret_list,key = lambda k:k["skuFriendlyName"])
+        ret_list = sorted(ret_list,key = lambda k:k["skuFriendlyName"].lower())
         return ret_list
         #return list(map(lambda x: { need_key : x[need_key] for need_key in need_keys } ,licences["value"]))
     async def readDomainsRaw(self):
