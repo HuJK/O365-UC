@@ -523,12 +523,16 @@ class assignLicense(RequestHandlerWithCROS):
             self.finish(json.dumps({"error":"Internal Error","error_description":str(e)},indent=2, ensure_ascii=False,default=lambda x:str(x)))
         
 class MyStaticFileHandler(tornado.web.StaticFileHandler):
-    def write_error(self, status_code, *args, **kwargs):
-        if status_code in [404]:
-            #self.set_status(200)
-            self.render('o365_uc/dist/index.html')
-        else:
-            super().write_error(status_code, *args, **kwargs)
+    def validate_absolute_path(self, root: str, absolute_path: str):
+        root = os.path.abspath(root)
+        try:
+            return super().validate_absolute_path(root, absolute_path)
+        except tornado.web.HTTPError as he:
+            if he.status_code == 404:
+                return os.path.join(root, self.default_filename)
+            else:
+                raise he
+            
 
 
 if __name__ == '__main__':
