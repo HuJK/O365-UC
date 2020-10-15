@@ -421,7 +421,7 @@
       GETPWD_loading:false,
       GETPWD_errmsg:"",
       GETPWD_color : "blue",
-      DEFAULT_HELLO_message : null,
+      DEFAULT_HELLO_message : "",
 
 
       invite_success : false,
