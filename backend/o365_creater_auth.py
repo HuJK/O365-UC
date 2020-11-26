@@ -40,6 +40,23 @@ def dict_factory(cursor, row):
         d[col[0]] = row[idx]
     return d
 
+class litesql():
+    def __init__(self,sql_path = "./invite_code/datas.db"):
+        self.invite_code_db_path =  "./invite_code/datas.db";\
+        self.conn = sqlite3.connect(self.invite_code_db_path)
+        self.conn.row_factory = dict_factory
+        self.cursor = self.conn.cursor()
+    def query_read_raw(self,query,params):
+        return self.cursor.execute(query,params).fetchall()
+    def query_write_raw(self,query,params):
+        self.cursor.execute(query,params)
+        self.conn.commit()
+    def __del__(self):
+        self.conn.close()
+    def select(self,tablename,condition):
+        pass
+        
+
 class pwd():
     def __init__(self,config_path = "./config2.json"):
         self.__dict__ = {
@@ -265,9 +282,8 @@ class pwd():
                 raise self.generateError(401,"CAPTCHA failed",check_func_ret)
         if self.check(password):
             sid = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(32))
-            if checkOnly == False:
-                expired_loginUser = { k:v for k,v in self.loginUser.items() if (v["expire"] < time.time()) }
-                list(map(self.logout,expired_loginUser.keys())) # logout all expired user
+            if checkOnly == False: #Currenyly only update password this will be true
+                self.clean_timeout_user(write2disk=False)
                 self.loginUser[sid] = {"expire":time.time() + self.expire_in}
                 if self.modName == "Code":
                     self.loginUser[sid]["invite_code"] = password
@@ -279,6 +295,12 @@ class pwd():
                 return {"session_id":"FakeID","expore_in":self.expire_in - 1}
         else:
             self.checkLoginErr("",errReasion= "Invalid " + self.modName + ".")
+    def clean_timeout_user(self,write2disk=True):
+        expired_loginUser = { k:v for k,v in self.loginUser.items() if (v["expire"] < time.time()) }
+        list(map(self.logout,expired_loginUser.keys())) # logout all expired user
+        if write2disk:
+            with open(self.config_path,"w") as config:
+                config.write(json.dumps(self.__dict__,ensure_ascii=False,indent = 2,default=lambda o:None))
 
 class pwd_guest(pwd):
     def __init__(self, *args, **kwargs):
@@ -292,6 +314,7 @@ class pwd_guest(pwd):
             raise self.generateError(401,"Permission Denied","Function not enabled.")
         if re.fullmatch(self.GETPWD_valid_mail,email_in,flags=0) == None:
             raise self.generateError(400,"Permission Denied","This email not allowed.")
+        self.clean_timeout_user()
         conn = sqlite3.connect(self.invite_code_db_path)
         conn.row_factory = dict_factory
         cursor = conn.cursor()
@@ -313,7 +336,7 @@ class pwd_guest(pwd):
             new_pwd = registers_list[0]["invite_code"]
             web_msg = "resend"
         else:
-            new_pwd = "email_" + self.generatePwd(string.ascii_letters + string.digits , 32)
+            new_pwd = "email" + self.generatePwd(string.ascii_letters + string.digits , 27)
             web_msg = "send"
         resend_log += [{"time":time.time()}]
         
@@ -324,11 +347,11 @@ class pwd_guest(pwd):
 
         # Create the body of the message (a plain-text and an HTML version).
         email_html = self.MAIL_msg_cont.replace("__new_code_here__",new_pwd)
-
+        email_text = "\n".join(filter(None,re.sub(r'<.*?>',"", email_html).split("\n")))
         # Attach parts into message container.
         # According to RFC 2046, the last part of a multipart message, in this case
         # the HTML message, is best and preferred.
-        msg.attach(MIMEText(email_html, 'plain'))
+        msg.attach(MIMEText(email_text, 'plain'))
         msg.attach(MIMEText(email_html, 'html'))
         
         s = smtplib.SMTP(*self.MAIL_smtp_info.split(":"))
