@@ -29,10 +29,10 @@ If you want use different port, please edit the ```listen_port``` section in ```
 Demo Site :
 
 Guest page:
-[https://ruvm.whojk.com:2053/](https://ruvm.whojk.com:2053/)
+[https://o365demo.hujk.eu.org/](https://o365demo.hujk.eu.org/)
 
 Admin page:
-[https://ruvm.whojk.com:2053/admin](https://ruvm.whojk.com:2053/admin)
+[https://o365demo.hujk.eu.org/admin](https://o365demo.hujk.eu.org/admin)
 
 Demo site are just for demo, it will **not** create real users.
 
